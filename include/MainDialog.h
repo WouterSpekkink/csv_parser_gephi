@@ -54,13 +54,13 @@ signals:
 
 private slots:
     void getFile();
-    // void setSep(const QString &selection);
+    void setSep(const QString &selection);
     // void setNetworkType(const QString &selection);
     // void enableNetwork();
-    // void fireFileSend();
+    void fireFileSend();
     // void enableCalc();
     // void calculateNetwork();
-    // void getDetails();
+    void getDetails();
     // void setGranularity(int value);
     void resetFileImport();
     // void setLowerBound(int value);
@@ -85,7 +85,7 @@ private:
     InputTable *inputTable;
     QComboBox *networkSelector;
     QPushButton *exitButton;
-    MatCollection *matCollection;
+  //MatCollection *matCollection;
     QPushButton *goNetwork;
     std::vector<std::string> tableHeader;
     std::vector<std::string> nameList;
@@ -101,7 +101,7 @@ private:
     QSpinBox *monitorLower;
     QLabel *lowerMonLabel;
     QLabel *upperMonLabel;
-    EdgeFinder *edgeFinder;
+  //EdgeFinder *edgeFinder;
     QPushButton *goEdges;
     QPushButton *saveEdges;
     QPushButton *openMetrics;
@@ -110,7 +110,7 @@ private:
     QLabel *currentAgent;
     QPushButton *changeAgent;
     QCheckBox *slide;
-    TwoModeEdges *twoModeEdges;
+  //TwoModeEdges *twoModeEdges;
 
 };
 

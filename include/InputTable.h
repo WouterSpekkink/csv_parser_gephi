@@ -34,33 +34,32 @@
 
 class InputTable : public QObject {
 
-    Q_OBJECT
+  Q_OBJECT
 
 public:
-    InputTable(QWidget *parent = 0); 
-    void ReadFile(const std::string &file, const char &delim);
-    int GetRows();
-    int GetCols();
-    const std::vector<std::string> GetHeader();
-    const std::vector<std::string> GetRowNames();
-    const std::vector<std::vector <short> > GetRowData();
-
-    ~InputTable() {}
-
+  InputTable(QWidget *parent = 0); 
+  void ReadFile(const std::string &file, const char &delim);
+  int GetRows();
+  int GetCols();
+  const std::vector<std::string> GetHeader();
+  const std::vector<std::string> GetRowNames();
+  const std::vector<std::vector <std::string> > GetRowData();
+  
+  ~InputTable() {}
+  
 signals:
-    void importFinished();
-
+  void importFinished();
+		       
 private slots:
-void readData(const QString &fileName, const QString &sep);
-    
+  void readData(const QString &fileName, const QString &sep);
+  
 private:
-    std::vector<std::string> header; // This will hold the header of the file
-    std::vector<std::string> rowNames; // This will hold the row names
-
-    // I think I could keep this to hold the data, but probably need to change the variable
-    // type into string.
-    std::vector<std::vector <short> > rowData; // This will hold the numerical data row-wise
-    int nrow;
-    int ncol;
-  };
+  std::vector<std::string> header; // This will hold the header of the file
+  std::vector<std::string> rowNames; // This will hold the row names
+  
+  // I think I could keep this to hold the data, but needed to change the data type into string..
+  std::vector<std::vector <std::string> > rowData; // This will hold the numerical data row-wise
+  int nrow;
+  int ncol;
+};
 #endif

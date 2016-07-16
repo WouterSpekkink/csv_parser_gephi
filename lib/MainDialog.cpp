@@ -128,16 +128,16 @@ void MainDialog::getDetails()
 {
   tableHeader = inputTable->GetHeader();
   nameList = inputTable->GetRowNames();
-  maxGranularity = tableHeader.size();
-  chooseGranularity->setRange(1, maxGranularity);
-  chooseGranularity->setValue(1);
-  chooseLowerBound->setRange(1, maxGranularity);
-  chooseUpperBound->setRange(1, maxGranularity);
-  chooseLowerBound->setValue(1);
-  chooseUpperBound->setValue(maxGranularity);
-  monitorLower->setRange(1, maxGranularity);
-  monitorUpper->setRange(1, maxGranularity);
-  monitorUpper->setValue(maxGranularity);
+  //maxGranularity = tableHeader.size();
+  //chooseGranularity->setRange(1, maxGranularity);
+  //chooseGranularity->setValue(1);
+  //chooseLowerBound->setRange(1, maxGranularity);
+  //chooseUpperBound->setRange(1, maxGranularity);
+  //chooseLowerBound->setValue(1);
+  //chooseUpperBound->setValue(maxGranularity);
+  //monitorLower->setRange(1, maxGranularity);
+  //monitorUpper->setRange(1, maxGranularity);
+  //monitorUpper->setValue(maxGranularity);
 }
 
 void MainDialog::resetFileImport()
@@ -145,35 +145,35 @@ void MainDialog::resetFileImport()
   saveEdges->setEnabled(false);
 }
 
-void MainDialog::enableSave()
-{
-  saveEdges->setEnabled(true);
-}
+//void MainDialog::enableSave()
+//{
+//  saveEdges->setEnabled(true);
+//}
 
-void MainDialog::saveEdgesFile()
-{    
-  QString QsaveFile = QFileDialog::getSaveFileName(this, tr("Save File"),"", "Comma Delimited Files (*.csv *.txt)");
-  std::string saveFile = QsaveFile.toStdString();
-  std::string stdSep = sep.toStdString();
-  if(networkType == "Whole Network - Dynamic" || networkType == "Ego Network - Dynamic") {
-    std::string type = networkType.toStdString();
-    CsvOutput(edgeFinder, type, saveFile, stdSep);
-  }
-  if(networkType == "Partial Network - Static" || networkType == "Ego Network - Static") {
-    std::string type = networkType.toStdString();
-    CsvOutput(edgeFinder, type, saveFile, stdSep);
-  }
-  if(networkType == "Two Mode Network - Dynamic") {
-    CsvOutput(twoModeEdges, saveFile, stdSep);
-  }
-}
+//void MainDialog::saveEdgesFile()
+//{    
+//  QString QsaveFile = QFileDialog::getSaveFileName(this, tr("Save File"),"", "Comma Delimited Files (*.csv *.txt)");
+//  std::string saveFile = QsaveFile.toStdString();
+//  std::string stdSep = sep.toStdString();
+//  if(networkType == "Whole Network - Dynamic" || networkType == "Ego Network - Dynamic") {
+//    std::string type = networkType.toStdString();
+//    CsvOutput(edgeFinder, type, saveFile, stdSep);
+//  }
+//  if(networkType == "Partial Network - Static" || networkType == "Ego Network - Static") {
+//    std::string type = networkType.toStdString();
+//    CsvOutput(edgeFinder, type, saveFile, stdSep);
+//  }
+//  if(networkType == "Two Mode Network - Dynamic") {
+//    CsvOutput(twoModeEdges, saveFile, stdSep);
+//  }
+//}
 
 void MainDialog::closing()
 {
     delete inputTable;
-    delete matCollection;
-    delete edgeFinder;
-    delete twoModeEdges;
+    //delete matCollection;
+    //delete edgeFinder;
+    //delete twoModeEdges;
 }
 
 

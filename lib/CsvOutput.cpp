@@ -28,7 +28,7 @@
 #include <fstream>
 #include <QFileDialog>
 
-bool CsvOutput(MatrixMulti *matrix, std::string filename, std::string sep) 
+/*bool CsvOutput(MatrixMulti *matrix, std::string filename, std::string sep) 
 {
     std::ofstream fileOut(filename.c_str()); 
     if(!fileOut.is_open()) {
@@ -214,3 +214,4 @@ bool CsvOutput(TwoModeEdges *edges, std::string filename, std::string sep)
     fileOut.close();
     return true;
 }
+*/
