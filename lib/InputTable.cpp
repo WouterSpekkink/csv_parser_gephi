@@ -23,6 +23,13 @@
 
 */ 
 
+/*
+
+ TODO: 
+ * I still have to come up with something to handle separators that are used within cells.
+
+
+*/
 
 #include <string>
 #include <vector>

@@ -23,6 +23,17 @@
  along with the Gephi CSV Parser.  If not, see <http://www.gnu.org/licenses/>.
 
 */
+
+
+/*
+
+ TODO:
+ * I should completely rewrite the CsvOutput file, creating two new implementations:
+     - One for Nodes
+     - One for Edges
+ * Remove all the old code afterwards. That's it.
+
+ */
  
 #include "../include/CsvOutput.h"
 #include <fstream>

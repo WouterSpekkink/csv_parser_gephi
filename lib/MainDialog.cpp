@@ -22,7 +22,15 @@
  along with the Gephi CSV Parser.  If not, see <http://www.gnu.org/licenses/>.
 
 */ 
- 
+
+/*
+
+TODO:
+ * I still have to create something that activates the second separater within cells.
+   Probably just a checkbox. 
+
+ */
+
 #include <QtGui>
 
 #include "../include/MainDialog.h"
@@ -44,32 +52,48 @@ MainDialog::MainDialog(QWidget *parent)
   sepSelector->addItem(";");
   sepSelector->addItem("|");
   sepSelector->addItem("tab");
+  sepTwoSwitcher = new QCheckBox("Separators within columns", this);
+  sepTwoSwitcher->setChecked(0);
+  sepTwoSelector = new QComboBox(this);
+  sepTwoSelector->addItem("-Select a delimiter-");
+  sepTwoSelector->addItem(",");
+  sepTwoSelector->addItem(";");
+  sepTwoSelector->addItem("|");
+  sepTwoSelector->setEnabled(false);
   importFile = new QPushButton(tr("Import"));
-
-  // I probably have to make two separate save buttons, for nodes and edges
+  saveNodes = new QPushButton(tr("Save Nodes File"));
   saveEdges = new QPushButton(tr("Save Edges File"));
+  saveNodes->setEnabled(false);
   saveEdges->setEnabled(false);
-  
-  
+    
   connect(openFile, SIGNAL(clicked()), this, SLOT(getFile()));
   connect(sepSelector, SIGNAL(currentIndexChanged(const QString &)), this, SLOT(setSep(const QString &)));
+  connect(sepTwoSwitcher, SIGNAL(stateChanged(const int &)), this, SLOT(switchSepTwo(const int &)));
+  connect(sepTwoSelector, SIGNAL(currentIndexChanged(const QString &)), this, SLOT(setSep(const QString &)));
   connect(importFile, SIGNAL(clicked()), this, SLOT(resetFileImport()));
   connect(importFile, SIGNAL(clicked()), this, SLOT(fireFileSend()));
   connect(this, SIGNAL(sendFile(const QString &, const QString &)), inputTable, SLOT(readData(const QString &, const QString &)));
   // connect(inputTable, SIGNAL(importFinished()), this, SLOT(enableNetwork()));
   // connect(inputTable, SIGNAL(importFinished()), this, SLOT(getDetails()));
   connect(exitButton, SIGNAL(clicked()), qApp, SLOT(quit()));
-  
-  
-  // connect(goEdges, SIGNAL(clicked()), this, SLOT(enableSave()));
-  // connect(saveEdges, SIGNAL(clicked()), this, SLOT(saveEdgesFile()));
-  
+
+  // goEdges no longer exists, but I should replace it by another signal source that enables both the Nodes and Edges save buttons.
+  // Probably this should be a button that activates the conversion of the data. This could just be the file import button.
+  // Look at the two signals that I commented out above.
+  //connect(goEdges, SIGNAL(clicked()), this, SLOT(enableSave()));
+  connect(saveNodes, SIGNAL(clicked()), this, SLOT(saveNodesFile()));
+  connect(saveEdges, SIGNAL(clicked()), this, SLOT(saveEdgesFile()));
+    
   QHBoxLayout *topLayout = new QHBoxLayout;
   topLayout->addWidget(openFile);
   topLayout->addWidget(sepSelector);
+
+  topLayout->addWidget(sepTwoSwitcher);
+  topLayout->addWidget(sepTwoSelector);
   topLayout->addWidget(importFile);
   
   QVBoxLayout *lowerMiddleLayout = new QVBoxLayout;
+  lowerMiddleLayout->addWidget(saveNodes);
   lowerMiddleLayout->addWidget(saveEdges);
 
   QHBoxLayout *lowerLayout = new QHBoxLayout;
@@ -97,7 +121,7 @@ MainDialog::MainDialog(QWidget *parent)
   lowerLayout->setContentsMargins(QMargins(15,15,15,15));
   mainLayout->addLayout(lowerLayout);
   setLayout(mainLayout);
-  
+
   setWindowTitle(tr("Gephi CSV Parser"));
   setFixedHeight(sizeHint().height());
     
@@ -113,10 +137,27 @@ void MainDialog::getFile()
   }
 }
 
+void MainDialog::switchSepTwo(const int &state)
+{
+  if(state == 0)
+    {
+      sepTwoSelector->setEnabled(false);
+    }
+  else if(state == 2)
+    {
+      sepTwoSelector->setEnabled(true);
+    }
+}
+
 void MainDialog::setSep(const QString &selection)
 {
   if(selection == "tab") sep = "\t";
   else sep = selection;
+}
+
+void MainDialog::setSepTwo(const QString &selection)
+{
+  sepTwo = selection;
 }
 
 void MainDialog::fireFileSend()
@@ -142,13 +183,20 @@ void MainDialog::getDetails()
 
 void MainDialog::resetFileImport()
 {
+  saveNodes->setEnabled(false);
   saveEdges->setEnabled(false);
+  sepTwoSwitcher->setEnabled(false);
+  sepTwoSwitcher->setChecked(0);
 }
 
-//void MainDialog::enableSave()
-//{
-//  saveEdges->setEnabled(true);
-//}
+void MainDialog::enableSave()
+{
+  saveNodes->setEnabled(true);
+  saveEdges->setEnabled(true);
+}
+
+// I need to rewrite the stuff below, after I have rewritten the CsvOutput class.
+
 
 //void MainDialog::saveEdgesFile()
 //{    
@@ -171,9 +219,6 @@ void MainDialog::resetFileImport()
 void MainDialog::closing()
 {
     delete inputTable;
-    //delete matCollection;
-    //delete edgeFinder;
-    //delete twoModeEdges;
 }
 
 
