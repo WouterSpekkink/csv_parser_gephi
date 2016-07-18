@@ -38,11 +38,10 @@ class InputTable : public QObject {
 
 public:
   InputTable(QWidget *parent = 0); 
-  void ReadFile(const std::string &file, const char &delim);
-  int GetRows();
+  void ReadFileOne(const std::string &file, const char &delimOne, const char &delimTwo);
+  void ReadFileTwo(const std::string &file, const char &delimOne);
   int GetCols();
   const std::vector<std::string> GetHeader();
-  const std::vector<std::string> GetRowNames();
   const std::vector<std::vector <std::string> > GetRowData();
   
   ~InputTable() {}
@@ -51,15 +50,14 @@ signals:
   void importFinished();
 		       
 private slots:
-  void readData(const QString &fileName, const QString &sep);
+  void readDataOne(const QString &fileName, const QString &sepOne, const QString &sepTwo);
+  void readDataTwo(const QString &fileName, const QString &sepOne);
   
 private:
   std::vector<std::string> header; // This will hold the header of the file
-  std::vector<std::string> rowNames; // This will hold the row names
   
   // I think I could keep this to hold the data, but needed to change the data type into string..
   std::vector<std::vector <std::string> > rowData; // This will hold the numerical data row-wise
-  int nrow;
   int ncol;
 };
 #endif

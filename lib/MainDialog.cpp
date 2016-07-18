@@ -26,8 +26,9 @@
 /*
 
 TODO:
- * I still have to create something that activates the second separater within cells.
-   Probably just a checkbox. 
+ * I have to add something that allows you the columns to be exported as Nodes and Edges.
+   This also needs to be passed as arguments to the CsvOutput method responsible for writing
+   the files.
 
  */
 
@@ -72,7 +73,8 @@ MainDialog::MainDialog(QWidget *parent)
   connect(sepTwoSelector, SIGNAL(currentIndexChanged(const QString &)), this, SLOT(setSep(const QString &)));
   connect(importFile, SIGNAL(clicked()), this, SLOT(resetFileImport()));
   connect(importFile, SIGNAL(clicked()), this, SLOT(fireFileSend()));
-  connect(this, SIGNAL(sendFile(const QString &, const QString &)), inputTable, SLOT(readData(const QString &, const QString &)));
+  connect(this, SIGNAL(sendFileOne(const QString &, const QString &, const QString &)), inputTable, SLOT(readDataOne(const QString &, const QString &, const QString &)));
+  connect(this, SIGNAL(sendFileTwo(const QString &, const QString &)), inputTable, SLOT(readDataTwo(const QString &, const QString &)));
   // connect(inputTable, SIGNAL(importFinished()), this, SLOT(enableNetwork()));
   // connect(inputTable, SIGNAL(importFinished()), this, SLOT(getDetails()));
   connect(exitButton, SIGNAL(clicked()), qApp, SLOT(quit()));
@@ -84,14 +86,19 @@ MainDialog::MainDialog(QWidget *parent)
   connect(saveNodes, SIGNAL(clicked()), this, SLOT(saveNodesFile()));
   connect(saveEdges, SIGNAL(clicked()), this, SLOT(saveEdgesFile()));
     
-  QHBoxLayout *topLayout = new QHBoxLayout;
-  topLayout->addWidget(openFile);
-  topLayout->addWidget(sepSelector);
-
-  topLayout->addWidget(sepTwoSwitcher);
-  topLayout->addWidget(sepTwoSelector);
-  topLayout->addWidget(importFile);
-  
+  QVBoxLayout *topLayout = new QVBoxLayout;
+  QHBoxLayout *topLayoutOne = new QHBoxLayout;
+  topLayoutOne->addWidget(openFile);
+  topLayoutOne->addWidget(sepSelector);
+  QHBoxLayout *topLayoutTwo = new QHBoxLayout;
+  topLayoutTwo->addWidget(sepTwoSwitcher);
+  topLayoutTwo->addWidget(sepTwoSelector);
+  QHBoxLayout *topLayoutThree = new QHBoxLayout;
+  topLayoutThree->addWidget(importFile);
+  topLayout->addLayout(topLayoutOne);
+  topLayout->addLayout(topLayoutTwo);
+  topLayout->addLayout(topLayoutThree);
+    
   QVBoxLayout *lowerMiddleLayout = new QVBoxLayout;
   lowerMiddleLayout->addWidget(saveNodes);
   lowerMiddleLayout->addWidget(saveEdges);
@@ -151,8 +158,8 @@ void MainDialog::switchSepTwo(const int &state)
 
 void MainDialog::setSep(const QString &selection)
 {
-  if(selection == "tab") sep = "\t";
-  else sep = selection;
+  if(selection == "tab") sepOne = "\t";
+  else sepOne = selection;
 }
 
 void MainDialog::setSepTwo(const QString &selection)
@@ -162,13 +169,17 @@ void MainDialog::setSepTwo(const QString &selection)
 
 void MainDialog::fireFileSend()
 {
-  emit sendFile(fileName, sep);
+  if (sepTwoSwitcher->isChecked()) {
+    emit sendFileOne(fileName, sepOne, sepTwo);
+  } else {
+    emit sendFileTwo(fileName, sepOne);
+  }
 }
 
 void MainDialog::getDetails()
 {
   tableHeader = inputTable->GetHeader();
-  nameList = inputTable->GetRowNames();
+  //nameList = inputTable->GetRowNames();
   //maxGranularity = tableHeader.size();
   //chooseGranularity->setRange(1, maxGranularity);
   //chooseGranularity->setValue(1);

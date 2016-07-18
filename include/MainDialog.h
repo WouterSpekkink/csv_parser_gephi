@@ -50,7 +50,8 @@ public:
   MainDialog(QWidget *parent=0);
 
 signals:
-  void sendFile(const QString &file, const QString &sep);
+  void sendFileOne(const QString &file, const QString &sepOne, const QString &sepTwo);
+  void sendFileTwo(const QString &file, const QString &sepOne);
 
 private slots:
   void getFile();
@@ -68,7 +69,7 @@ private:
   QLabel *middleLabel;
   QLabel *lowerLabel;
   QString fileName;
-  QString sep;
+  QString sepOne;
   QString sepTwo;
   QPushButton *openFile;
   QComboBox *sepSelector;

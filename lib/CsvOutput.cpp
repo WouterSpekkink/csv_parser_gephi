@@ -31,6 +31,9 @@
  * I should completely rewrite the CsvOutput file, creating two new implementations:
      - One for Nodes
      - One for Edges
+ * The new classes should take column names as arguments, and export different things
+   depending on the selection.
+ * The separators within columns ('+') need to be handled by CsvOutput. 
  * Remove all the old code afterwards. That's it.
 
  */
