@@ -2,10 +2,10 @@
 This program was built for personal use by Wouter Spekkink (wouter.spekkink@manchester.ac.uk) to convert csv-output from event sequence datasets into nodes and edges files that can be imported in Gephi, and that are more easily parsed by Neo4J csv-import functions. 
 
 An appropriate input-file has the following characteristics:
-	-It has a header that indicates different types of entities listed in the file.
-	-The first column is a list of events.
-	-The other columns are lists of entities linked to the events in the first column.
-	-There may be multiple values within a cell (except for events), as long as these are separated with an appropriate delimiter. Make sure that this delimiter is different from the one used, by to separate the columns of the file.
+	*It has a header that indicates different types of entities listed in the file.
+	*The first column is a list of events.
+	*The other columns are lists of entities linked to the events in the first column.
+	*There may be multiple values within a cell (except for events), as long as these are separated with an appropriate delimiter. Make sure that this delimiter is different from the one used, by to separate the columns of the file.
 
 The program requires the user to select an input file (csv), as well as the symbol that is used as column delimiter in the file. The user also has the option to select a second delimiter, in case the user has input multiple values in certain columns, and wants to separate these. After importing the file, a new nodes list and a new edges list can be written to the disk.
 The purpose of this program is highly specific, but there may be things in the code that are useful for others. 
