@@ -38,5 +38,5 @@ The nodes list will list all entities (including events) that are included in th
 These two files can be imported directly into [Gephi](http://www.gephi.org) from the data laboratory.
 
 # Contact details
-For any comments, contact met at wouter.spekkink@manchester.ac.uk or wouterspekkink@gmail.com
+For any comments, contact me at wouter.spekkink@manchester.ac.uk or wouterspekkink@gmail.com
 
