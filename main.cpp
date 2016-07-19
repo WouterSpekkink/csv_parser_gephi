@@ -32,7 +32,6 @@ int main(int argc, char *argv[])
   // Setting up the app
   QApplication CsvParser(argc, argv);
 
-  // TEMP: I still need to set thi
   MainDialog *dialog = new MainDialog;
   dialog->show();
   return CsvParser.exec();

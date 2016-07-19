@@ -23,18 +23,18 @@
  along with the Gephi CSV Parser.  If not, see <http://www.gnu.org/licenses/>.
 
 */
+
+/*
+  ===NOTES===
+  See CsvOutput.cpp for more details on what this class and its methods do.  
+
+ */
+
 #ifndef CSVOUTPUT_H
 #define CSVOUTPUT_H
-//#include "../include/MatrixMulti.h"
-//#include "MatCollection.h"
-//#include "EdgeFinder.h"
-//#include "MetricsFinder.h"
-//#include "TwoModeEdges.h"
+#include "../include/InputTable.h"
 
-//bool CsvOutput(MatrixMulti *matrix, std::string filename, std::string sep); //Implementation will write a single adjacency matrix
-//bool CsvOutput(MatCollection *collection, std::string filename, std::string sep); //Implementation will write collection of matrices
-//bool CsvOutput(EdgeFinder *edges, std::string networkType, std::string filename, std::string sep); // Implementation will write edges file
-//bool CsvOutput(MetricsFinder *metrics, std::string filename, std::string sep, std::string metric);
-//bool CsvOutput(TwoModeEdges *edges, std::string filename, std::string sep);
+bool CsvOutputEdges(InputTable *table, std::string filename, std::string sepOne);
+bool CsvOutputNodes(InputTable *table, std::string filename, std::string sepOne);
 
 #endif

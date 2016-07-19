@@ -24,10 +24,9 @@
 */ 
 
 /*
-
- TODO: 
- * I still have to come up with something to handle separators that are used within cells.
- * Tne below does not yet take into account the possibility that values in cells are not multiple.
+  ==NOTES==
+  This class imports data from a csv-file, based on instructions received from the main dialog
+  of the program. The data are imported as well as stored by the InputTable class.
 
 */
 
@@ -37,70 +36,60 @@
 #include <sstream>
 #include "../include/InputTable.h"
 
-
+// Constructor for this class.
 InputTable::InputTable(QWidget *parent) 
 {
 }
 
+// We first have two methods that process the instructions received by the main dialog.
+// The methods also make sure that data that was already stored is removed first.
+// The first method is called if the user told the program that multi-value columns exist.
 void InputTable::readDataOne(const QString &fileName, const QString &sepOne, const QString &sepTwo) 
 {
+  // Here any existing data are removed. 
+  events.clear();
+  rowData.clear();
+  header.clear();
+  nEvents = 0;
+
+  // Translating the method arguments to something that this class can use.
   const std::string file = fileName.toStdString();
   const std::string delimiterOne = sepOne.toStdString();
   const std::string delimiterTwo = sepTwo.toStdString();
-  
-  // Let's make sure that the data vector is emptied, before making a new one
-  rowData.clear();
-  header.clear();
-   
   std::istringstream convertOne(delimiterOne.c_str());
   char delOne;
   convertOne >> delOne;
   std::istringstream convertTwo(delimiterTwo.c_str());
   char delTwo;
   convertTwo >> delTwo;
-  
+
+  // And then we call another method that will do the actual importing of data.
   ReadFileOne(file, delOne, delTwo);
 }
 
+// This method is called if the user told the program that no multi-value columns exist.
 void InputTable::readDataTwo(const QString &fileName, const QString &sepOne) 
 {
-  const std::string file = fileName.toStdString();
-  const std::string delimiterOne = sepOne.toStdString();
-  
-  // Let's make sure that the data vector is emptied, before making a new one
+  // Here any existing data are removed. 
+  events.clear();
   rowData.clear();
   header.clear();
-   
+  nEvents = 0;
+
+  // Translating the method arguments to something that this class can use.
+  const std::string file = fileName.toStdString();
+  const std::string delimiterOne = sepOne.toStdString();
   std::istringstream convertOne(delimiterOne.c_str());
   char delOne;
   convertOne >> delOne;
-  
+
+  // And we call another method that will do the actual importing of data.
   ReadFileTwo(file, delOne);
 }
 
-
-/* One issue I need to deal with at some point is that there may be additional
-   separators within columns. 
-
-   EDIT: 
-   I noticed that csv files store cell values with separators with quotes. Example:
-   col_1;col_2
-   1;actor_piet
-   2;"actor_piet;actor_hans"
-
-   EDIT 2:
-   I actually wonder how much this matters. It is fine if the vectors that store the data
-   from each line are of different lengths, as long as each line is in one vector.
-   I might have to get rid of the quotation signs though.
-   That could probably be done easily, by iterating to the resulting data vector.
-
-   EDIT 3: 
-   One thing I didn't keep in mind yet is that the separators in cells may be different
-   from those used in the file in general. Perhaps I should develop a solution for both
-   separately. 
-*/
-
-   //We implement the function that this class uses to read and process input files.
+// The next two methods read the files and import data.
+// They are triggered by one of the two methods above.
+// One deals with multi-value columns, and the other doesn't.
 void InputTable::ReadFileOne(const std::string &inputFile, const char &delOne, const char &delTwo) 
 {
   // Let's first make a vector of vectors of strings. Currently, this will make a matrix of strings.
@@ -114,28 +103,16 @@ void InputTable::ReadFileOne(const std::string &inputFile, const char &delOne, c
     
     // First we get the lines of data, one by one.
     std::string buffer;
+
+    // I also decided to set the second separator to a standard symbol that cannot be used by the user.
+    // Then the CsvOutput functions can simply use that symbol to separate the values again.
     if(!getline(myFile, buffer)) break;
-
-    // Then we need to make sure that if there are seperators within columns, they are handled properly.
-    // I will do this by replacing them by a separator that cannot be selected by the user.
-
-    // So what this function does, is iterate to the most recently loaded string.
-    std::string::iterator it;
-    bool firstFound = false;
-    for (it = buffer.begin(); it != buffer.end(); it++) {
-      // If it finds a quotation sign, and it has not found one yet *firstFound == false, then it will
-      // start replacing delimiters/separators by a "+" sign.
-      char tempChar = *it;
-      if (tempChar == '\"' && firstFound == false) {
-	firstFound == true;
-	// if it finds the second quotation sign, it will stop replacing separators by plus signs.
-      } else if (tempChar == '\"' && firstFound == true) {
-	firstFound == false;
-      }
-      if (firstFound && tempChar == delTwo) {
-	*it = '+';
+    for (std::string::size_type i = 0; i != buffer.length(); i++) {
+      if (buffer[i] == delTwo) {
+	buffer[i] = '+';
       }
     }
+  
     // Next, we load the string into an istringstream and cut it up in smaller pieces.
     std::istringstream stringStream(buffer);
     // We make a vector of strings to hold the pieces of this line of data.
@@ -150,46 +127,48 @@ void InputTable::ReadFileOne(const std::string &inputFile, const char &delOne, c
     }
     // And then we push this line of data in the larger data vector.
     // Cells with muliple values will still have the "+" signs.
-    // I think we should deal with these when writing the data with the CsvOutput class.
     dataVector.push_back(record);
   }
   
-  // Some of this stuff is inherited from a program with a different purpose, but maybe still useful
+  // This will disect the data into the header row, the event column, and the data rows. 
   std::vector<std::vector <std::string> >::iterator it;
   for(it = dataVector.begin(); it != dataVector.end(); it++) {
-    if(it == dataVector.begin()) {// The first line is always the header
+    // The first line is always the header
+    if(it == dataVector.begin()) {
       std::vector<std::string> tempVector = *it;
       std::vector<std::string>::iterator it2;
-      for(it2 = tempVector.begin() + 1; it2 != tempVector.end(); it2++)
+      for(it2 = tempVector.begin(); it2 != tempVector.end(); it2++)
 	header.push_back(*it2);
-      ncol = header.size(); // - 1 for empty space;
     } else {
+      // Then we handle the other 'rows' in the data vector.
       std::vector<std::string> tempVector = *it;
-
-      // REMOVED THE ROWNAMES STUFF HERE, BECAUSE WE DON'T NEED THAT ANYMORE.
-
-      // Commenting out some stuff, because data were converted to numbers, and I think I don't need that.
+      // We create a separate vector with events (these should always be in first column)
+      events.push_back(tempVector[0]); 
       std::vector <std::string>::iterator it2;
       std::vector <std::string> dataLine;
-      
-      for(it2 = tempVector.begin(); it2 != tempVector.end(); it2++) {
-	//short tempNumber = 0;
-	//std::istringstream convert(*it2);
-	//convert >> tempNumber;
-	//numbers.push_back(tempNumber);
+
+      // What we do here is to remove all quotation signs that might still be left in the lines of data.
+      // I think this is only necessary when handling some csv-files (maybe the windows-based ones).
+      // Perhaps this is not necessary at all. I can always remove it.
+      for(it2 = tempVector.begin() + 1; it2 != tempVector.end(); it2++) {
 	std::string tempString = *it2;
-	// What we do here is to remove all quotation signs that might still be left in the lines of data.
+	
 	if (tempString.substr(0, 1) == "\"") {
 	  tempString  = tempString.substr(1, tempString.length());
 	}
 	if (tempString.substr(tempString.length()) == "\"") {
 	  tempString = tempString.substr(0, tempString.length() - 1);
-	  dataLine.push_back(tempString);
 	}
+	// After processing the data point, we push it to a data-line vector
+	// And then we push the result into the rowData vector.
+	dataLine.push_back(tempString);
       }
       rowData.push_back(dataLine);
     }
   }
+  // We also want to know how many events we actually have.
+  nEvents = events.size();
+  // This signal is sent to the main dialog to let it know we have finished importing the file.
   emit importFinished();
 }
 
@@ -207,7 +186,7 @@ void InputTable::ReadFileTwo(const std::string &inputFile, const char &delOne)
     // First we get the lines of data, one by one.
     std::string buffer;
     if(!getline(myFile, buffer)) break;
-
+ 
     // Next, we load the string into an istringstream and cut it up in smaller pieces.
     std::istringstream stringStream(buffer);
     // We make a vector of strings to hold the pieces of this line of data.
@@ -226,51 +205,52 @@ void InputTable::ReadFileTwo(const std::string &inputFile, const char &delOne)
     dataVector.push_back(record);
   }
   
-  // Some of this stuff is inherited from a program with a different purpose, but maybe still useful
+  // This will disect the data into the header row, the event column, and the data rows. 
   std::vector<std::vector <std::string> >::iterator it;
   for(it = dataVector.begin(); it != dataVector.end(); it++) {
-    if(it == dataVector.begin()) {// The first line is always the header
+    // The first line is always the header
+    if(it == dataVector.begin()) {
       std::vector<std::string> tempVector = *it;
       std::vector<std::string>::iterator it2;
-      for(it2 = tempVector.begin() + 1; it2 != tempVector.end(); it2++)
+      for(it2 = tempVector.begin(); it2 != tempVector.end(); it2++)
 	header.push_back(*it2);
-      ncol = header.size(); 
     } else {
+      // Then we process the other 'rows' of the data vector.
       std::vector<std::string> tempVector = *it;
-
-      // REMOVED THE ROWNAMES STUFF HERE, BECAUSE WE DON'T NEED THAT ANYMORE.
-
-      // Commenting out some stuff, because data were converted to numbers, and I think I don't need that.
-      std::vector <std::string>::iterator it2;
+      // We make a separate vector for events (These should be in the first column)
+      events.push_back(tempVector[0]); 
+      std::vector<std::string>::iterator it2;
       std::vector <std::string> dataLine;
-      
-      for(it2 = tempVector.begin(); it2 != tempVector.end(); it2++) {
-	//short tempNumber = 0;
-	//std::istringstream convert(*it2);
-	//convert >> tempNumber;
-	//numbers.push_back(tempNumber);
+      for (it2 = tempVector.begin() + 1; it2 != tempVector.end(); it2++) {
 	std::string tempString = *it2;
+	dataLine.push_back(tempString);
       }
       rowData.push_back(dataLine);
     }
   }
+  // We also want to know the number of events that we imported.
+  nEvents = events.size();
+  // We finish by sending a signal to the main dialog to tell it we have finished importing the file.
   emit importFinished();
 }
 
-
-
-int InputTable::GetCols() 
-{
-  return ncol;
+// Returns the number of events currently stored.
+int InputTable::GetEventNumber() {
+  return nEvents;
 }
 
-const std::vector<std::string> InputTable::GetHeader() 
-{
+// Returns a vector with the event names.
+const std::vector<std::string> InputTable::GetEvents() {
+  return events;
+} 
+
+// Returns a vector with the headers.
+const std::vector<std::string> InputTable::GetHeader() {
   return header;
 }
 
-const std::vector<std::vector <std::string> > InputTable::GetRowData() 
-{
+// Returns a vector with the data.
+const std::vector<std::vector <std::string> > InputTable::GetRowData() {
   return rowData;
 }
 

@@ -23,8 +23,12 @@
 
 */ 
 
-// I have to rewrite this class a bit, because it needs to read a different kind of file.
+/*
+  ===NOTES===
+  See InputTable.cpp for more details on what this class and its methods do.  
 
+ */
+   
 #ifndef INPUTTABLE_H
 #define INPUTTABLE_H
 
@@ -40,7 +44,8 @@ public:
   InputTable(QWidget *parent = 0); 
   void ReadFileOne(const std::string &file, const char &delimOne, const char &delimTwo);
   void ReadFileTwo(const std::string &file, const char &delimOne);
-  int GetCols();
+  int GetEventNumber();
+  const std::vector<std::string> GetEvents();
   const std::vector<std::string> GetHeader();
   const std::vector<std::vector <std::string> > GetRowData();
   
@@ -54,10 +59,12 @@ private slots:
   void readDataTwo(const QString &fileName, const QString &sepOne);
   
 private:
-  std::vector<std::string> header; // This will hold the header of the file
-  
-  // I think I could keep this to hold the data, but needed to change the data type into string..
-  std::vector<std::vector <std::string> > rowData; // This will hold the numerical data row-wise
-  int ncol;
+  // We assume that the first column of the file that the user submits has the events/incidents.
+  // We also assume that the file has a header.
+  // The rest of the contents of the file are treated as data.
+  std::vector<std::string> events;
+  std::vector<std::string> header; 
+  std::vector<std::vector <std::string> > rowData;
+  int nEvents;
 };
 #endif
