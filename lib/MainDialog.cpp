@@ -69,7 +69,6 @@ MainDialog::MainDialog(QWidget *parent) : QDialog(parent) {
   sepSelector->addItem(";");
   sepSelector->addItem(":");
   sepSelector->addItem("|");
-  sepSelector->addItem("tab");
   sepTwoSwitcher = new QCheckBox("Separators within columns", this); // Checkbox to indicate whether multivalue columns exist.
   sepTwoSwitcher->setChecked(Qt::Unchecked); // We set it to unchecked by default.
   sepTwoSelector = new QComboBox(this); // Combobox to select delimiter for multivalue columns. The items are added later.
@@ -183,19 +182,11 @@ void MainDialog::switchSepTwo(const int &state) {
    for both are the same. Therefore, the options for the multi-value delimiters always
    exclude the column delimiter that is selected. The options for the multi-value 
    delimiter are reset each time the user sets another column delimiter.
- */
+*/
 void MainDialog::setSepOne(const QString &selection) {
-  if(selection == "tab") sepOne = "\t";
-  else sepOne = selection;
-
-  if (sepOne == "\t") {
-    sepTwoSelector->clear();
-    sepTwoSelector->addItem("-Select a second delimiter-");
-    sepTwoSelector->addItem(",");
-    sepTwoSelector->addItem(";");
-    sepTwoSelector->addItem(":");
-    sepTwoSelector->addItem("|");
-  } else if(sepOne == ",") {
+  sepOne = selection;
+  
+  if(sepOne == ",") {
     sepTwoSelector->clear();
     sepTwoSelector->addItem("-Select a second delimiter-");
     sepTwoSelector->addItem(";");
