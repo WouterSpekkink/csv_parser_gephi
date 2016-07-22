@@ -61,7 +61,22 @@ MainDialog::MainDialog(QWidget *parent) : QDialog(parent) {
      The program is made so that the same delimiters cannot be used twice, and the label below informs the user of this.
   */
   noteSeps = new QLabel(tr("Note: You cannot use the same delimiter twice,\n because that makes the file unreadable to the program."));
-  middleLabel = new QLabel(tr("<h3>Save files</h3>")); // Just a title for another part of the dialog
+
+  
+  // Adding some new widgets
+  middleLabel = new QLabel(tr("<h3>Set Variables</h3>"));
+  sourceSelector = new QComboBox(this);
+  sourceSelector->addItem("-Select Source Node-");
+  targetSelector = new QComboBox(this);
+  targetSelector->addItem("-Select Target Node-");
+  setPropertiesButton = new QPushButton(tr("Set Properties"));
+  sourceSelector->setEnabled(false);
+  targetSelector->setEnabled(false);
+  setPropertiesButton->setEnabled(false);
+  //
+
+  
+  lowerLabel = new QLabel(tr("<h3>Save files</h3>")); // Just a title for another part of the dialog
   openFile = new QPushButton(tr("Open File")); // Button to select filename
   sepSelector = new QComboBox(this); // Combobox to select delimiter for columns.
   sepSelector->addItem("-Select a delimiter-");
@@ -103,8 +118,14 @@ MainDialog::MainDialog(QWidget *parent) : QDialog(parent) {
   connect(this, SIGNAL(sendFileTwo(const QString &, const QString &)), inputTable, SLOT(readDataTwo(const QString &, const QString &)));
   // The exit button signal to close the program.
   connect(exitButton, SIGNAL(clicked()), qApp, SLOT(quit()));
-  // If this signal is fired, the buttons that allow the user to save files are activated.
-  connect(inputTable, SIGNAL(importFinished()), this, SLOT(enableSave()));
+
+  // ADDING NEW SIGNALS
+  connect(inputTable, SIGNAL(importFinished()), this, SLOT(enableVariables()));
+  
+  // I SHOULD CHANGE THIS SIGNAL LATER.
+  //connect(inputTable, SIGNAL(importFinished()), this, SLOT(enableSave()));
+
+  
   // The two buttons below call one of the save functions. Basically, they call one included in the appropriate functions of the CsvOutput header.
   connect(saveNodes, SIGNAL(clicked()), this, SLOT(saveNodesFile()));
   connect(saveEdges, SIGNAL(clicked()), this, SLOT(saveEdgesFile()));
@@ -125,25 +146,45 @@ MainDialog::MainDialog(QWidget *parent) : QDialog(parent) {
   topLayout->addLayout(topLayoutTwo);
   topLayout->addLayout(topLayoutThree);
   topLayout->addLayout(topLayoutFour);
+
+  // Adding some new layout
+  QVBoxLayout *middleLayout = new QVBoxLayout;
+  QHBoxLayout *middleLayoutMain = new QHBoxLayout;
+  middleLayoutMain->addWidget(sourceSelector);
+  middleLayoutMain->addWidget(targetSelector);
+  middleLayoutMain->addWidget(setPropertiesButton);
+  middleLayout->addWidget(middleLabel);
+  middleLayout->addLayout(middleLayoutMain);
+
+  //
+  
   QVBoxLayout *lowerMiddleLayout = new QVBoxLayout;
-  lowerMiddleLayout->addWidget(middleLabel);
+  lowerMiddleLayout->addWidget(lowerLabel);
   lowerMiddleLayout->addWidget(saveNodes);
   lowerMiddleLayout->addWidget(saveEdges);
   QHBoxLayout *lowerLayout = new QHBoxLayout;
   lowerLayout->addWidget(exitButton);
   QFrame *topLine = new QFrame();
   topLine->setFrameShape(QFrame::HLine);
+  QFrame *middleLine = new QFrame();
+  middleLine->setFrameShape(QFrame::HLine);
   QFrame *lowerLine = new QFrame();
   lowerLine->setFrameShape(QFrame::HLine);
-  QVBoxLayout *mainLayout = new QVBoxLayout;
+
+  QVBoxLayout *mainLayout = new QVBoxLayout; 
   mainLayout->addWidget(topLabel);
-  topLayout->setContentsMargins(QMargins(15,15,15,15));
+  topLayout->setContentsMargins(QMargins(15, 15, 15, 15));
   mainLayout->addLayout(topLayout);
   mainLayout->addWidget(topLine);
-  lowerMiddleLayout->setContentsMargins(QMargins(15,15,15,15));
+  
+  middleLayout->setContentsMargins(QMargins(15, 15, 15, 15));
+  mainLayout->addLayout(middleLayout);
+  mainLayout->addWidget(middleLine);
+  
+  lowerMiddleLayout->setContentsMargins(QMargins(15, 15, 15, 15));  
   mainLayout->addLayout(lowerMiddleLayout);
   mainLayout->addWidget(lowerLine);
-  lowerLayout->setContentsMargins(QMargins(15,15,15,15));
+  lowerLayout->setContentsMargins(QMargins(15, 15, 15, 15));
   mainLayout->addLayout(lowerLayout);
   setLayout(mainLayout);
   setWindowTitle(tr("Gephi CSV Parser"));
@@ -232,19 +273,27 @@ void MainDialog::fireFileSend()
   }
 }
 
-// This function will reset some options to prevent unexpected results if the user
-// opens another file.
-void MainDialog::resetFileImport() {
-  saveNodes->setEnabled(false);
-  saveEdges->setEnabled(false);
-  sepTwoSelector->setEnabled(false);
-  sepTwoSwitcher->setChecked(Qt::Unchecked);
-}
-
 // This function enables the save buttons.
 void MainDialog::enableSave() {
   saveNodes->setEnabled(true);
   saveEdges->setEnabled(true);
+}
+
+// This function enables the variable buttons and also sets the contents of the two comboboxes first.
+void MainDialog::enableVariables() {
+  sourceSelector->clear();
+  targetSelector->clear();
+  std::vector<std::string> optionLabels = inputTable->GetHeader();
+  std::vector<std::string>::iterator it;
+  for(it = optionLabels.begin(); it != optionLabels.end(); it++) {
+    QString currentLabel = QString::fromUtf8(it->c_str());
+    sourceSelector->addItem(currentLabel);
+    targetSelector->addItem(currentLabel);
+  }
+  
+  sourceSelector->setEnabled(true);
+  targetSelector->setEnabled(true);
+  setPropertiesButton->setEnabled(false);
 }
 
 // This function triggers another function in the CsvOutput header that writes an edges file.
@@ -270,6 +319,18 @@ void MainDialog::saveNodesFile() {
 // This function make sure that the memory used by the instantiated InputTable class is freed up again. 
 void MainDialog::closing() {
     delete inputTable;
+}
+
+// This function will reset some options to prevent unexpected results if the user
+// opens another file.
+void MainDialog::resetFileImport() {
+  saveNodes->setEnabled(false);
+  saveEdges->setEnabled(false);
+  sepTwoSelector->setEnabled(false);
+  sepTwoSwitcher->setChecked(Qt::Unchecked);
+  sourceSelector->setEnabled(false);
+  targetSelector->setEnabled(false);
+  setPropertiesButton->setEnabled(false);
 }
 
 

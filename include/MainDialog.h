@@ -65,6 +65,7 @@ private slots:
   void setSepTwo(const QString &selection);
   void fireFileSend();
   void enableSave();
+  void enableVariables();
   void resetFileImport();
   void closing();
   void saveEdgesFile();
@@ -72,8 +73,17 @@ private slots:
   
 private:
   QLabel *topLabel;
-  QLabel *middleLabel;
+  QLabel *lowerLabel;
   QLabel *noteSeps;
+
+  // Adding some new widgets
+  QLabel *middleLabel;
+  QComboBox *sourceSelector;
+  QComboBox *targetSelector;
+  QPushButton *setPropertiesButton; // Should open a new dialog that allows the user to set the properties of the source and target with checkboxes.
+  
+  // 
+
   QString fileName;
   QString sepOne;
   QString sepTwo;
