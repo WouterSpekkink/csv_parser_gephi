@@ -16,7 +16,7 @@
   
   The Gephi CSV Parser is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
   GNU General Public License for more details.
   
   You should have received a copy of the GNU General Public License
@@ -36,6 +36,7 @@
 #include <QtGui>
 #include <QApplication>
 #include <QDialog>
+#include "PropertiesDialog.h"
 #include "InputTable.h"
 #include "CsvOutput.h"
 #include <vector>
@@ -57,19 +58,22 @@ public:
 signals:
   void sendFileOne(const QString &file, const QString &sepOne, const QString &sepTwo);
   void sendFileTwo(const QString &file, const QString &sepOne);
-
+  
 private slots:
   void getFile();
   void setSepOne(const QString &selection);
   void switchSepTwo(const int &state);
   void setSepTwo(const QString &selection);
   void fireFileSend();
-  void enableSave();
   void enableVariables();
-  void resetFileImport();
-  void closing();
+  void openPropertiesDialog();
+  void setSourceSelection(const QString &selection);
+  void setTargetSelection(const QString &selectioN);
+  void enableSave(const QVector<QString*> &sourceProps, const QVector<QString*> &targetProps);
   void saveEdgesFile();
   void saveNodesFile();
+  void closing();
+  void resetFileImport();
   
 private:
   QLabel *topLabel;
@@ -81,6 +85,11 @@ private:
   QComboBox *sourceSelector;
   QComboBox *targetSelector;
   QPushButton *setPropertiesButton; // Should open a new dialog that allows the user to set the properties of the source and target with checkboxes.
+  QString sourceSelection = "";
+  QString targetSelection = "";
+  QVector<QString*> sourceProperties;
+  QVector<QString*> targetProperties;
+  QDialog *propertiesDialog;
   
   // 
 

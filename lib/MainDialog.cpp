@@ -73,8 +73,8 @@ MainDialog::MainDialog(QWidget *parent) : QDialog(parent) {
   sourceSelector->setEnabled(false);
   targetSelector->setEnabled(false);
   setPropertiesButton->setEnabled(false);
+  propertiesDialog = new PropertiesDialog;
   //
-
   
   lowerLabel = new QLabel(tr("<h3>Save files</h3>")); // Just a title for another part of the dialog
   openFile = new QPushButton(tr("Open File")); // Button to select filename
@@ -121,6 +121,10 @@ MainDialog::MainDialog(QWidget *parent) : QDialog(parent) {
 
   // ADDING NEW SIGNALS
   connect(inputTable, SIGNAL(importFinished()), this, SLOT(enableVariables()));
+  connect(sourceSelector, SIGNAL(currentIndexChanged(const QString &)), this, SLOT(setSourceSelection (QString &)));
+  connect(targetSelector, SIGNAL(currentIndexChanged(const QString &)), this, SLOT(setTargetSelection (QString &)));
+  connect(propertiesDialog, SIGNAL(propertiesCloseWith(const QVector<QString*> &, const QVector<QString*> &)), this, SLOT(enableSave(const QVector<QString*> &, const QVector<QString*> &)));
+
   
   // I SHOULD CHANGE THIS SIGNAL LATER.
   //connect(inputTable, SIGNAL(importFinished()), this, SLOT(enableSave()));
@@ -155,7 +159,6 @@ MainDialog::MainDialog(QWidget *parent) : QDialog(parent) {
   middleLayoutMain->addWidget(setPropertiesButton);
   middleLayout->addWidget(middleLabel);
   middleLayout->addLayout(middleLayoutMain);
-
   //
   
   QVBoxLayout *lowerMiddleLayout = new QVBoxLayout;
@@ -202,22 +205,6 @@ void MainDialog::getFile() {
   }
 }
 
-/* This function sets the combobox for selecting delimiters for multi-valued columns on or off.
-   The save buttons are deactivated to force the user to click the import button again.
-   Without this, any changes in the settings of the combobox would not be implemented.
-*/
-void MainDialog::switchSepTwo(const int &state) {
-  if(state == Qt::Checked) {
-    sepTwoSelector->setEnabled(true);
-    saveNodes->setEnabled(false);
-    saveEdges->setEnabled(false);
-  } else {
-    sepTwoSelector->setEnabled(false);
-    saveNodes->setEnabled(false);
-    saveEdges->setEnabled(false);
-  }
-}
-
 /* This function sets the delimiter with which columns in the input file are delimited.
    The program cannot distinguish between columns and multi-value cells if the delimiters 
    for both are the same. Therefore, the options for the multi-value delimiters always
@@ -254,6 +241,22 @@ void MainDialog::setSepOne(const QString &selection) {
   }
 }
 
+/* This function sets the combobox for selecting delimiters for multi-valued columns on or off.
+   The save buttons are deactivated to force the user to click the import button again.
+   Without this, any changes in the settings of the combobox would not be implemented.
+*/
+void MainDialog::switchSepTwo(const int &state) {
+  if(state == Qt::Checked) {
+    sepTwoSelector->setEnabled(true);
+    saveNodes->setEnabled(false);
+    saveEdges->setEnabled(false);
+  } else {
+    sepTwoSelector->setEnabled(false);
+    saveNodes->setEnabled(false);
+    saveEdges->setEnabled(false);
+  }
+}
+
 // This function sets the multi-value delimiter to what was chosen by the user.
 void MainDialog::setSepTwo(const QString &selection) {
   sepTwo = selection;
@@ -273,16 +276,12 @@ void MainDialog::fireFileSend()
   }
 }
 
-// This function enables the save buttons.
-void MainDialog::enableSave() {
-  saveNodes->setEnabled(true);
-  saveEdges->setEnabled(true);
-}
-
 // This function enables the variable buttons and also sets the contents of the two comboboxes first.
 void MainDialog::enableVariables() {
   sourceSelector->clear();
   targetSelector->clear();
+  sourceSelector->addItem("-Select Source Node-");
+  targetSelector->addItem("-Select Target Node-");
   std::vector<std::string> optionLabels = inputTable->GetHeader();
   std::vector<std::string>::iterator it;
   for(it = optionLabels.begin(); it != optionLabels.end(); it++) {
@@ -293,7 +292,33 @@ void MainDialog::enableVariables() {
   
   sourceSelector->setEnabled(true);
   targetSelector->setEnabled(true);
-  setPropertiesButton->setEnabled(false);
+  
+}
+
+void MainDialog::setSourceSelection(const QString &selection) {
+  sourceSelection = selection;
+}
+
+void MainDialog::setTargetSelection(const QString &selection) {
+  targetSelection = selection;
+}
+
+void MainDialog::openPropertiesDialog() {
+  if (sourceSelection != "-Select Source Node-" && targetSelection != "-Select Target Node-") {
+
+    // Set this as a signal.
+    propertiesDialog->setDetails(inputTable->GetHeader(), sourceSelection, targetSelection);
+    propertiesDialog->exec();
+  }
+  // I still need to add an error dialog for when the conditions of the if-statement above are not met.
+}
+
+// This function enables the save buttons.
+void MainDialog::enableSave(const QVector<QString*> &sourceProps, const QVector<QString*> &targetProps) {
+  sourceProperties = sourceProps;
+  targetProperties = targetProps;
+  saveNodes->setEnabled(true);
+  saveEdges->setEnabled(true);
 }
 
 // This function triggers another function in the CsvOutput header that writes an edges file.
@@ -319,6 +344,10 @@ void MainDialog::saveNodesFile() {
 // This function make sure that the memory used by the instantiated InputTable class is freed up again. 
 void MainDialog::closing() {
     delete inputTable;
+    qDeleteAll(sourceProperties);
+    sourceProperties.clear();
+    qDeleteAll(targetProperties);
+    targetProperties.clear();
 }
 
 // This function will reset some options to prevent unexpected results if the user
