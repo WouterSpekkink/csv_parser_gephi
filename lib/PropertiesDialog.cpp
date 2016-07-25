@@ -28,32 +28,37 @@
 #include <vector>
 #include <string>
 
-//PropertiesDialog::PropertiesDialog(QWidget *parent, InputTable *input, QString source, QString target) : QDialog(parent), origin(input), sourceNode(source), targetNode(target) {
+PropertiesDialog::PropertiesDialog(QWidget *parent) : QDialog(parent) {}
 
-PropertiesDialog::PropertiesDialog(QWidget *parent) : QDialog(parent) {
-  // There is a lot of stuff that won't work if I call them during construction.
-  // Therefore I wrote the SetDetails instruction instead, which can be called later. 
-}
-
-PropertiesDialog::setDetails(std::vector<std::string> header, const QString sourceInput, const QString targetInput) {
+PropertiesDialog::PropertiesDialog(QWidget *parent, const QVector<QString> Qheader, const QString sourceInput, const QString targetInput) {
   sourceLabel = new QLabel(tr("Source"));
   targetLabel = new QLabel(tr("Target"));
 
   saveCloseButton = new QPushButton(tr("Save and Close"));
   cancelButton = new QPushButton(tr("Cancel"));
 
-  std::vector<std::string>::iterator it;
-
+  connect(saveCloseButton, SIGNAL(clicked()), this, SLOT(saveAndClose()));
+  connect(cancelButton, SIGNAL(clicked()), this, SLOT(cancel()));
+  
   // Creating two lists of check boxes.
+  QVectorIterator<QString> it(Qheader);
+  while (it.hasNext()) {
+    QCheckBox *tempBoxOne = new QCheckBox(it.peekNext(), this);
+    QCheckBox *tempBoxTwo = new QCheckBox(it.next(), this);
 
-  for (it = header.begin(); it != header.end(); it++, index++) {
-    QString currentLabel = QString::fromUtf8(it->c_str());
-    QCheckBox *tempBox = new QCheckBox(currentLabel, this);
-      sourceVector.push_back(tempBox);
-      targetVector.push_back(tempBox);
+    if (tempBoxOne->text() != sourceInput && tempBoxOne->text() != targetInput) {
+      sourceVector.push_back(tempBoxOne);
+    } else {
+      delete tempBoxOne;
+    }
+    if (tempBoxTwo->text() != targetInput && tempBoxTwo->text() != sourceInput) {
+      targetVector.push_back(tempBoxTwo);
+    } else {
+      delete tempBoxTwo;
+    }
   }
 
-  QVBoxLayout *mainlayout = new QVBoxLayout;
+  QVBoxLayout *mainLayout = new QVBoxLayout;
   QHBoxLayout *mainBodyLayout = new QHBoxLayout;
   QVBoxLayout *mainBodyLeft = new QVBoxLayout;
   QVBoxLayout *mainBodyRight = new QVBoxLayout;
@@ -65,7 +70,7 @@ PropertiesDialog::setDetails(std::vector<std::string> header, const QString sour
   }
   
   mainBodyRight->addWidget(targetLabel);
-  QVectorIterator<QCheckBox*> sI(targetVector);
+  QVectorIterator<QCheckBox*> tI(targetVector);
   while (tI.hasNext()) {
     mainBodyRight->addWidget(tI.next());
   }
@@ -92,32 +97,34 @@ void PropertiesDialog::cancel() {
   // Maybe just two vectors.
 
   emit propertiesCloseWithout();
+  this->close();
 }
 
 void PropertiesDialog::saveAndClose() {
+  
+  QVectorIterator<QCheckBox*> spI(sourceVector);
+  spI.toFront();
+  while (spI.hasNext()) {
+    QCheckBox *tempBox = spI.next();
+    if (tempBox->checkState() == Qt::Checked) {
+      sourceProperties.push_back(tempBox->text());
+    }
+  }
+
+  QVectorIterator<QCheckBox*> tpI(targetVector);
+  tpI.toFront();
+  while (tpI.hasNext()) {
+    QCheckBox *tempBox = tpI.next();
+    if (tempBox->checkState() == Qt::Checked) {
+      targetProperties.push_back(tempBox->text());
+     }
+   }
+
+  emit propertiesCloseWith(sourceProperties, targetProperties);
   qDeleteAll(sourceVector);
   sourceVector.clear();
   qDeleteAll(targetVector);
   targetVector.clear();
 
-  QVectorIterator<QCheckBox*> spI(sourceVector);
-  while (spI.hasNext()) {
-    if (spI->peekNext()->CheckState() == Qt::Checked) {
-      sourceProperties->push_back(spI->next()->text());
-    } else {
-      spI->next();
-    }
-  }
-
-  QVectorIterator<QCheckBox*> tpI(targetVector);
-  while (tpI.hasNext()) {
-    if (tpI->peekNext()->CheckState() == Qt::Checked) {
-      targetProperties->push_back(tpI->next()->text());
-    } else {
-      tpI->next();
-    }
-    
-  }
-  
-  emit propertiesCloseWith(sourceProperties, targetProperties);
+  this->close();
 }

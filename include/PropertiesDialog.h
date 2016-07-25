@@ -27,11 +27,7 @@
 #ifndef PROPERTIESDIALOG_H
 #define PROPERTIESDIALOG_H
 
-#include <QDialog>
-#include <QCheckBox>
-#include <QPushButton>
-#include <QVector>
-#include <QVectorIterator>
+#include <QtGui>
 #include "../include/InputTable.h"
 
 class PropertiesDialog : public QDialog {
@@ -39,20 +35,17 @@ class PropertiesDialog : public QDialog {
   Q_OBJECT
 
 public:
-  // PropertiesDialog(QWidget *parent = 0, InputTable *input = new InputTable(), QString source = QString(), QString target = QString());
-  
   PropertiesDialog(QWidget *parent = 0);
   
-  void setDetails(std::vector<std::string> header, const QString sourceInput, const QString targetInput);
-  
+  PropertiesDialog(QWidget *parent = 0, QVector<QString> = QVector<QString>(), QString source = QString(), QString target = QString());
+    
   ~PropertiesDialog() {};
-
 
 signals:
   // One signal for the cancel button.
   // One signal for the save and close button.
   void propertiesCloseWithout();		       
-  void propertiesCloseWith(const QVector<QString*> sourceProps, const QVector<QString*> targetProps);
+  void propertiesCloseWith(const QVector<QString> sourceProps, const QVector<QString> targetProps);
 			
 private slots:
 
@@ -66,16 +59,14 @@ private:
   QString sourceNode;
   QString targetNode;
   
-  //  InputTable *origin;
-  
   QVector<QCheckBox*> sourceVector;
   QVector<QCheckBox*> targetVector;    
 
   QPushButton *saveCloseButton;
   QPushButton *cancelButton;
 
-  QVector<QString*> sourceProperties;
-  QVector<QString*> targetProperties;
+  QVector<QString> sourceProperties;
+  QVector<QString> targetProperties;
 };
   
 

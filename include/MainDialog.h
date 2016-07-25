@@ -58,6 +58,7 @@ public:
 signals:
   void sendFileOne(const QString &file, const QString &sepOne, const QString &sepTwo);
   void sendFileTwo(const QString &file, const QString &sepOne);
+  void sendDetails(const QVector<QString> &vector, const QString &source, const QString &target);;
   
 private slots:
   void getFile();
@@ -68,8 +69,8 @@ private slots:
   void enableVariables();
   void openPropertiesDialog();
   void setSourceSelection(const QString &selection);
-  void setTargetSelection(const QString &selectioN);
-  void enableSave(const QVector<QString*> &sourceProps, const QVector<QString*> &targetProps);
+  void setTargetSelection(const QString &selection);
+  void enableSave(const QVector<QString> &sourceProps, const QVector<QString> &targetProps);
   void saveEdgesFile();
   void saveNodesFile();
   void closing();
@@ -85,10 +86,10 @@ private:
   QComboBox *sourceSelector;
   QComboBox *targetSelector;
   QPushButton *setPropertiesButton; // Should open a new dialog that allows the user to set the properties of the source and target with checkboxes.
-  QString sourceSelection = "";
-  QString targetSelection = "";
-  QVector<QString*> sourceProperties;
-  QVector<QString*> targetProperties;
+  QString sourceSelection;
+  QString targetSelection;
+  std::vector <std::string> sourceProperties;
+  std::vector <std::string> targetProperties;
   QDialog *propertiesDialog;
   
   // 

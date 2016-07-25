@@ -1,3 +1,4 @@
+
 /*
   Copyright 2016 Wouter Spekkink Authors : Wouter Spekkink
   <wouter.spekkink@gmail.com> Website : http://www.wouterspekkink.org
@@ -73,7 +74,6 @@ MainDialog::MainDialog(QWidget *parent) : QDialog(parent) {
   sourceSelector->setEnabled(false);
   targetSelector->setEnabled(false);
   setPropertiesButton->setEnabled(false);
-  propertiesDialog = new PropertiesDialog;
   //
   
   lowerLabel = new QLabel(tr("<h3>Save files</h3>")); // Just a title for another part of the dialog
@@ -116,14 +116,15 @@ MainDialog::MainDialog(QWidget *parent) : QDialog(parent) {
   connect(importFile, SIGNAL(clicked()), this, SLOT(fireFileSend()));
   connect(this, SIGNAL(sendFileOne(const QString &, const QString &, const QString &)), inputTable, SLOT(readDataOne(const QString &, const QString &, const QString &)));
   connect(this, SIGNAL(sendFileTwo(const QString &, const QString &)), inputTable, SLOT(readDataTwo(const QString &, const QString &)));
+   
   // The exit button signal to close the program.
   connect(exitButton, SIGNAL(clicked()), qApp, SLOT(quit()));
 
   // ADDING NEW SIGNALS
   connect(inputTable, SIGNAL(importFinished()), this, SLOT(enableVariables()));
-  connect(sourceSelector, SIGNAL(currentIndexChanged(const QString &)), this, SLOT(setSourceSelection (QString &)));
-  connect(targetSelector, SIGNAL(currentIndexChanged(const QString &)), this, SLOT(setTargetSelection (QString &)));
-  connect(propertiesDialog, SIGNAL(propertiesCloseWith(const QVector<QString*> &, const QVector<QString*> &)), this, SLOT(enableSave(const QVector<QString*> &, const QVector<QString*> &)));
+  connect(sourceSelector, SIGNAL(currentIndexChanged(const QString &)), this, SLOT(setSourceSelection(const QString &)));
+  connect(targetSelector, SIGNAL(currentIndexChanged(const QString &)), this, SLOT(setTargetSelection(const QString &)));
+  connect(setPropertiesButton, SIGNAL(clicked()), this, SLOT(openPropertiesDialog()));
 
   
   // I SHOULD CHANGE THIS SIGNAL LATER.
@@ -289,34 +290,56 @@ void MainDialog::enableVariables() {
     sourceSelector->addItem(currentLabel);
     targetSelector->addItem(currentLabel);
   }
-  
   sourceSelector->setEnabled(true);
   targetSelector->setEnabled(true);
-  
 }
 
 void MainDialog::setSourceSelection(const QString &selection) {
   sourceSelection = selection;
+  if (sourceSelection != "-Select Source Node-" && targetSelection != "-Select Target Node-" && sourceSelection != targetSelection) {
+    setPropertiesButton->setEnabled(true);
+  } else {
+    setPropertiesButton->setEnabled(false);
+  }
 }
 
 void MainDialog::setTargetSelection(const QString &selection) {
   targetSelection = selection;
+  if (sourceSelection != "-Select Source Node-" && targetSelection != "-Select Target Node-" && sourceSelection != targetSelection) {
+    setPropertiesButton->setEnabled(true);
+  } else {
+    setPropertiesButton->setEnabled(false);
+  }
 }
 
 void MainDialog::openPropertiesDialog() {
-  if (sourceSelection != "-Select Source Node-" && targetSelection != "-Select Target Node-") {
-
-    // Set this as a signal.
-    propertiesDialog->setDetails(inputTable->GetHeader(), sourceSelection, targetSelection);
-    propertiesDialog->exec();
+  std::vector<std::string> tempHeader = inputTable->GetHeader();
+  QVector<QString> tempQHeader;
+  std::vector<std::string>::iterator it;
+  for (it = tempHeader.begin(); it != tempHeader.end(); it++) {
+    QString currentEntry = QString::fromUtf8(it->c_str());
+    tempQHeader.push_back(currentEntry);
   }
-  // I still need to add an error dialog for when the conditions of the if-statement above are not met.
+  propertiesDialog = new PropertiesDialog(this, tempQHeader, sourceSelection, targetSelection);
+  propertiesDialog->setAttribute(Qt::WA_DeleteOnClose);
+  connect(propertiesDialog, SIGNAL(propertiesCloseWith(const QVector<QString> &, const QVector<QString> &)), this, SLOT(enableSave(const QVector<QString> &, const QVector<QString> &)));
+  propertiesDialog->exec();
 }
 
 // This function enables the save buttons.
-void MainDialog::enableSave(const QVector<QString*> &sourceProps, const QVector<QString*> &targetProps) {
-  sourceProperties = sourceProps;
-  targetProperties = targetProps;
+void MainDialog::enableSave(const QVector<QString> &sourceProps, const QVector<QString> &targetProps) {
+  QVectorIterator<QString> sIt(sourceProps);
+  while (sIt.hasNext()) {
+    QString QcurrentProperty = sIt.next();
+    std::string currentProperty = QcurrentProperty.toUtf8().constData();
+    sourceProperties.push_back(currentProperty);
+  }
+  QVectorIterator<QString> tIt(targetProps);
+  while (tIt.hasNext()) {
+    QString QcurrentProperty = tIt.next();
+    std::string currentProperty = QcurrentProperty.toUtf8().constData();
+    targetProperties.push_back(currentProperty);
+  }
   saveNodes->setEnabled(true);
   saveEdges->setEnabled(true);
 }
@@ -328,7 +351,7 @@ void MainDialog::saveEdgesFile() {
   std::string saveFile = QsaveFile.toStdString();
   std::string stdSep = sepOne.toStdString();
   // After preparing some necessary information, we call the CsvOutputEdges() function.
-  CsvOutputEdges(inputTable, saveFile, stdSep);
+  CsvOutputEdges(inputTable, sourceSelection, targetSelection, saveFile, stdSep);
 }
 
 // This function triggers another function in the CsvOutput header that writes an nodes file.
@@ -338,15 +361,13 @@ void MainDialog::saveNodesFile() {
   std::string saveFile = QsaveFile.toStdString();
   std::string stdSep = sepOne.toStdString();
   // After preparing some necessary information, we call the CsvOutputNodes() function.
-  CsvOutputNodes(inputTable, saveFile, stdSep);
+  CsvOutputNodes(inputTable, sourceSelection, targetSelection, sourceProperties, targetProperties, saveFile, stdSep);
 }
 
 // This function make sure that the memory used by the instantiated InputTable class is freed up again. 
 void MainDialog::closing() {
     delete inputTable;
-    qDeleteAll(sourceProperties);
     sourceProperties.clear();
-    qDeleteAll(targetProperties);
     targetProperties.clear();
 }
 
