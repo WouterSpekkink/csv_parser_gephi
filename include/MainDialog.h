@@ -16,7 +16,7 @@
   
   The Gephi CSV Parser is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
   GNU General Public License for more details.
   
   You should have received a copy of the GNU General Public License
@@ -36,6 +36,7 @@
 #include <QtGui>
 #include <QApplication>
 #include <QDialog>
+#include "PropertiesDialog.h"
 #include "InputTable.h"
 #include "CsvOutput.h"
 #include <vector>
@@ -57,36 +58,62 @@ public:
 signals:
   void sendFileOne(const QString &file, const QString &sepOne, const QString &sepTwo);
   void sendFileTwo(const QString &file, const QString &sepOne);
-
+  void sendDetails(const QVector<QString> &vector, const QString &source, const QString &target);;
+  
 private slots:
   void getFile();
   void setSepOne(const QString &selection);
   void switchSepTwo(const int &state);
   void setSepTwo(const QString &selection);
   void fireFileSend();
-  void enableSave();
-  void resetFileImport();
-  void closing();
+  void enableVariables();
+  void openPropertiesDialog();
+  void setSourceSelection(const QString &selection);
+  void setTargetSelection(const QString &selection);
+  void setProperties(const QVector<QString> &sourceProps, const QVector<QString> &targetProps);
+  void setRelationshipType();
   void saveEdgesFile();
+  void setExcludeSources(const int &state);
   void saveNodesFile();
+  void closing();
+  void resetFileImport();
   
 private:
-  QLabel *topLabel;
-  QLabel *middleLabel;
-  QLabel *noteSeps;
+  QPointer<QLabel> topLabel;
+  QPointer<QLabel> lowerLabel;
+  QPointer<QLabel> noteSeps;
+  QPointer<QLabel> middleLabel;
+  QPointer<QLabel> nodesEdgesLabel;
+  QPointer<QComboBox> sourceSelector;
+  QPointer<QComboBox> targetSelector;
+  QPointer<QPushButton> setPropertiesButton; 
+  QPointer<QDialog> propertiesDialog;
+  QPointer<QCheckBox> excludeSourcesCheckBox;
+  QPointer<QLabel> relationsLabel;
+  QPointer<QButtonGroup> relationsGroup;
+  QPointer<QCheckBox> relationsDirectedCheckBox;
+  QPointer<QCheckBox> relationsUndirectedCheckBox;
+  QPointer<QLabel> warningSeps;
+  QPointer<QPushButton> openFile;
+  QPointer<QComboBox> sepSelector;
+  QPointer<QComboBox> sepTwoSelector;
+  QPointer<QCheckBox> sepTwoSwitcher;
+  QPointer<QPushButton> importFile;
+  QPointer<InputTable> inputTable;
+  QPointer<QPushButton> exitButton;
+  QPointer<QPushButton> saveNodes;
+  QPointer<QPushButton> saveEdges;
+
+  bool excludeSources;
+  bool directedRelationships;
   QString fileName;
   QString sepOne;
   QString sepTwo;
-  QPushButton *openFile;
-  QComboBox *sepSelector;
-  QComboBox *sepTwoSelector;
-  QCheckBox *sepTwoSwitcher;
-  QPushButton *importFile;
-  InputTable *inputTable;
-  QPushButton *exitButton;
-  QPushButton *saveNodes;
-  QPushButton *saveEdges;
-  bool checked;
+  QString sourceSelection;
+  QString targetSelection;
+  std::vector <std::string> sourceProperties;
+  std::vector <std::string> targetProperties;
+
 };
 
 #endif

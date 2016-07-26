@@ -28,13 +28,13 @@
   ===NOTES===
   See CsvOutput.cpp for more details on what this class and its methods do.  
 
- */
+*/
 
 #ifndef CSVOUTPUT_H
 #define CSVOUTPUT_H
 #include "../include/InputTable.h"
 
-bool CsvOutputEdges(InputTable *table, std::string filename, std::string sepOne);
-bool CsvOutputNodes(InputTable *table, std::string filename, std::string sepOne);
+bool CsvOutputEdges(InputTable *table, const QString sourceSelection, const QString targetSelection, const bool directedRelationships, const std::string filename, const std::string sepOne, const std::string sepTwo);
+bool CsvOutputNodes(InputTable *table, QString sourceSelection, QString targetSelection, std::vector <std::string> sourceProperties, std::vector <std::string> targetProperties, bool excludeSources, std::string filename, std::string sepOne, std::string sepTwo);
 
 #endif

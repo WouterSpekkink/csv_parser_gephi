@@ -45,7 +45,6 @@ public:
   void ReadFileOne(const std::string &file, const char &delimOne, const char &delimTwo);
   void ReadFileTwo(const std::string &file, const char &delimOne);
   int GetEventNumber();
-  const std::vector<std::string> GetEvents();
   const std::vector<std::string> GetHeader();
   const std::vector<std::vector <std::string> > GetRowData();
   
@@ -62,7 +61,6 @@ private:
   // We assume that the first column of the file that the user submits has the events/incidents.
   // We also assume that the file has a header.
   // The rest of the contents of the file are treated as data.
-  std::vector<std::string> events;
   std::vector<std::string> header; 
   std::vector<std::vector <std::string> > rowData;
   int nEvents;

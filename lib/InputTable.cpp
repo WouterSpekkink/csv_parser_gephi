@@ -47,7 +47,6 @@ InputTable::InputTable(QWidget *parent)
 void InputTable::readDataOne(const QString &fileName, const QString &sepOne, const QString &sepTwo) 
 {
   // Here any existing data are removed. 
-  events.clear();
   rowData.clear();
   header.clear();
   nEvents = 0;
@@ -71,7 +70,6 @@ void InputTable::readDataOne(const QString &fileName, const QString &sepOne, con
 void InputTable::readDataTwo(const QString &fileName, const QString &sepOne) 
 {
   // Here any existing data are removed. 
-  events.clear();
   rowData.clear();
   header.clear();
   nEvents = 0;
@@ -103,16 +101,7 @@ void InputTable::ReadFileOne(const std::string &inputFile, const char &delOne, c
     
     // First we get the lines of data, one by one.
     std::string buffer;
-
-    // I also decided to set the second separator to a standard symbol that cannot be used by the user.
-    // Then the CsvOutput functions can simply use that symbol to separate the values again.
-    if(!getline(myFile, buffer)) break;
-    for (std::string::size_type i = 0; i != buffer.length(); i++) {
-      if (buffer[i] == delTwo) {
-	buffer[i] = '+';
-      }
-    }
-  
+    if (!getline(myFile, buffer)) break;
     // Next, we load the string into an istringstream and cut it up in smaller pieces.
     std::istringstream stringStream(buffer);
     // We make a vector of strings to hold the pieces of this line of data.
@@ -142,15 +131,13 @@ void InputTable::ReadFileOne(const std::string &inputFile, const char &delOne, c
     } else {
       // Then we handle the other 'rows' in the data vector.
       std::vector<std::string> tempVector = *it;
-      // We create a separate vector with events (these should always be in first column)
-      events.push_back(tempVector[0]); 
       std::vector <std::string>::iterator it2;
       std::vector <std::string> dataLine;
 
       // What we do here is to remove all quotation signs that might still be left in the lines of data.
       // I think this is only necessary when handling some csv-files (maybe the windows-based ones).
       // Perhaps this is not necessary at all. I can always remove it.
-      for(it2 = tempVector.begin() + 1; it2 != tempVector.end(); it2++) {
+      for(it2 = tempVector.begin(); it2 != tempVector.end(); it2++) {
 	std::string tempString = *it2;
 	
 	if (tempString.substr(0, 1) == "\"") {
@@ -167,7 +154,7 @@ void InputTable::ReadFileOne(const std::string &inputFile, const char &delOne, c
     }
   }
   // We also want to know how many events we actually have.
-  nEvents = events.size();
+  nEvents = dataVector.size() - 1;
   // This signal is sent to the main dialog to let it know we have finished importing the file.
   emit importFinished();
 }
@@ -217,11 +204,9 @@ void InputTable::ReadFileTwo(const std::string &inputFile, const char &delOne)
     } else {
       // Then we process the other 'rows' of the data vector.
       std::vector<std::string> tempVector = *it;
-      // We make a separate vector for events (These should be in the first column)
-      events.push_back(tempVector[0]); 
       std::vector<std::string>::iterator it2;
       std::vector <std::string> dataLine;
-      for (it2 = tempVector.begin() + 1; it2 != tempVector.end(); it2++) {
+      for (it2 = tempVector.begin(); it2 != tempVector.end(); it2++) {
 	std::string tempString = *it2;
 	dataLine.push_back(tempString);
       }
@@ -229,7 +214,7 @@ void InputTable::ReadFileTwo(const std::string &inputFile, const char &delOne)
     }
   }
   // We also want to know the number of events that we imported.
-  nEvents = events.size();
+  nEvents = dataVector.size() - 1;
   // We finish by sending a signal to the main dialog to tell it we have finished importing the file.
   emit importFinished();
 }
@@ -238,11 +223,6 @@ void InputTable::ReadFileTwo(const std::string &inputFile, const char &delOne)
 int InputTable::GetEventNumber() {
   return nEvents;
 }
-
-// Returns a vector with the event names.
-const std::vector<std::string> InputTable::GetEvents() {
-  return events;
-} 
 
 // Returns a vector with the headers.
 const std::vector<std::string> InputTable::GetHeader() {
