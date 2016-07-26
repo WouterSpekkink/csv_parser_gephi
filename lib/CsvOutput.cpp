@@ -42,7 +42,7 @@
 #include <sstream>
 
 // This function writes an edges file to the disk.
-bool CsvOutputEdges(InputTable *table, QString sourceSelection, QString targetSelection, std::string filename, std::string sepOne) {
+bool CsvOutputEdges(InputTable *table, QString sourceSelection, QString targetSelection, bool directedRelationships, std::string filename, std::string sepOne) {
   // We point to the InputTable and we get all the stuff out that we need.
   InputTable *outputTable = table; // pointer to output table.
   std::vector <std::string> headers = outputTable->GetHeader();
@@ -51,6 +51,11 @@ bool CsvOutputEdges(InputTable *table, QString sourceSelection, QString targetSe
   int targetIndex = 0;
   std::string sourceString = sourceSelection.toUtf8().constData();
   std::string targetString = targetSelection.toUtf8().constData();
+
+  std::string relationshipType = "Undirected";
+  if (directedRelationships) {
+    relationshipType = "Directed";
+  }
 
   for (std::vector<std::string>::size_type i = 0; i != headers.size(); i++) {
     std::string currentString = headers[i];
@@ -98,7 +103,7 @@ bool CsvOutputEdges(InputTable *table, QString sourceSelection, QString targetSe
       std::string currentSepSource = *itSepSources;
       for (itSepTargets = sepTargets.begin(); itSepTargets != sepTargets.end(); itSepTargets++) {
 	std::string currentSepTarget = *itSepTargets;
-	fileOut << currentSepSource << sepOne << currentSepTarget << sepOne << 1 << sepOne << "Undirected";
+	fileOut << currentSepSource << sepOne << currentSepTarget << sepOne << 1 << sepOne << relationshipType;
 	fileOut << '\n';
       }
     }
@@ -108,7 +113,7 @@ bool CsvOutputEdges(InputTable *table, QString sourceSelection, QString targetSe
   return true;
 }
 
-bool CsvOutputNodes(InputTable *table, QString sourceSelection, QString targetSelection, std::vector <std::string> sourceProperties, std::vector<std::string> targetProperties, std::string filename, std::string sepOne) {
+bool CsvOutputNodes(InputTable *table, QString sourceSelection, QString targetSelection, std::vector <std::string> sourceProperties, std::vector<std::string> targetProperties, bool excludeTargets, std::string filename, std::string sepOne) {
   // We point to the output table and get everything we need from it.
   InputTable *outputTable = table;
   std::vector <std::string> headers = outputTable->GetHeader();
@@ -119,9 +124,23 @@ bool CsvOutputNodes(InputTable *table, QString sourceSelection, QString targetSe
 
   std::vector <int> sourcePropertiesIndexes;
   std::vector <int> targetPropertiesIndexes;
+  std::vector <int> sharedPropertiesIndexes;
+
+  std::vector <std::string> sharedProperties;
 
   std::string sourceString = sourceSelection.toUtf8().constData();
   std::string targetString = targetSelection.toUtf8().constData();
+  std::string sharedString = "";
+
+  for (std::vector <std::string>::size_type i = 0; i != sourceProperties.size(); i++) {
+    for (std::vector <std::string>::size_type j = 0; j != targetProperties.size(); j++) {
+      if (sourceProperties[i] == targetProperties[j]) {
+	sharedProperties.push_back(sourceProperties[i]);
+	sourceProperties.erase(sourceProperties.begin() + i);
+	targetProperties.erase(targetProperties.begin() + j);
+      }
+    }
+  }
 
   for (std::vector<std::string>::size_type i = 0; i != headers.size(); i++) {
     std::string currentString = headers[i];
@@ -140,7 +159,7 @@ bool CsvOutputNodes(InputTable *table, QString sourceSelection, QString targetSe
 	sourcePropertiesIndexes.push_back(i);
       }
     }
-
+   
     // Here we make indexes for our target properties, so we know from which columns they originate.
     std::vector <std::string>::iterator targetPropertiesIt;
     for (targetPropertiesIt = targetProperties.begin(); targetPropertiesIt != targetProperties.end(); targetPropertiesIt++) {
@@ -149,9 +168,15 @@ bool CsvOutputNodes(InputTable *table, QString sourceSelection, QString targetSe
 	targetPropertiesIndexes.push_back(i);
       }
     }
+    std::vector <std::string>::iterator sharedPropertiesIt;
+    for (sharedPropertiesIt = sharedProperties.begin(); sharedPropertiesIt != sharedProperties.end(); sharedPropertiesIt++) {
+      std::string currentSharedProperty = *sharedPropertiesIt;
+      if (currentString == currentSharedProperty) {
+	sharedPropertiesIndexes.push_back(i);
+      }
+    }
   }
-
-
+  
   std::string sourcePropertiesHeader = "";
   if (sourceProperties.size() > 0) {
     std::vector <std::string>::iterator sourcePropertiesIt;
@@ -161,6 +186,7 @@ bool CsvOutputNodes(InputTable *table, QString sourceSelection, QString targetSe
     }
   }
 
+  
   std::string targetPropertiesHeader = "";    
   if (targetProperties.size() > 0) {
     std::vector <std::string>::iterator targetPropertiesIt;
@@ -169,7 +195,16 @@ bool CsvOutputNodes(InputTable *table, QString sourceSelection, QString targetSe
       targetPropertiesHeader = targetPropertiesHeader + sepOne + currentTargetHeader;
     }
   }
-      
+  
+  std::string sharedPropertiesHeader = "";
+  if (sharedProperties.size() >0) {
+    std::vector <std::string>::iterator sharedPropertiesIt;
+    for (sharedPropertiesIt = sharedProperties.begin(); sharedPropertiesIt != sharedProperties.end(); sharedPropertiesIt++) {
+      std::string currentSharedHeader = *sharedPropertiesIt;
+      sharedPropertiesHeader = sharedPropertiesHeader + sepOne + currentSharedHeader;
+    }
+  }
+  
   // Then we prepare the file for writing.
   std::ofstream fileOut(filename.c_str());
   if (!fileOut.is_open()) {
@@ -177,31 +212,33 @@ bool CsvOutputNodes(InputTable *table, QString sourceSelection, QString targetSe
   }
   
   // First we write the header of the file.
-  fileOut << "Id" << sepOne << "Type" << sepOne << "Label" << sourcePropertiesHeader << targetPropertiesHeader;
-  fileOut << '\n';
-  
-  // Writing the rest of the data is easier in this case.
-  // Just iterate through the different vectors and write their contents to the file.
+  if (!excludeTargets) {
+    fileOut << "Id" << sepOne << "Type" << sepOne << "Label" << sharedPropertiesHeader << sourcePropertiesHeader << targetPropertiesHeader;
+    fileOut << '\n';
+  } else {
+    fileOut << "Id" << sepOne << "Type" << sepOne << "Label" << sourcePropertiesHeader;
+    fileOut << '\n';
+  }
 
+  // And then we process all the data and eventually write it to the file.
   std::vector <std::vector <std::string> >::iterator itData;
 
   std::vector <std::string> sepSources;
   std::vector <std::string> sepTargets;
-
+  
   for (itData = data.begin(); itData != data.end(); itData++) {
     std::vector <std::string> currentData = *itData;
     std::string currentSource = currentData[sourceIndex];
     std::string currentTarget = currentData[targetIndex];
-
-    std::string sourcePropsString = "";
     std::string fakeSourceString = "";
+    std::string sourcePropsString = "";
     std::vector <int>::iterator sourcePropsIt;
     for (sourcePropsIt = sourcePropertiesIndexes.begin(); sourcePropsIt != sourcePropertiesIndexes.end(); sourcePropsIt++) {
       int currentIndex = *sourcePropsIt;
       sourcePropsString = sourcePropsString + sepOne + currentData[currentIndex];
       fakeSourceString = fakeSourceString + sepOne + "";
     }
-    
+
     std::string targetPropsString = "";
     std::string fakeTargetString = "";
     std::vector <int>::iterator targetPropsIt;
@@ -210,26 +247,43 @@ bool CsvOutputNodes(InputTable *table, QString sourceSelection, QString targetSe
       targetPropsString = targetPropsString + sepOne + currentData[currentIndex];
       fakeTargetString = fakeTargetString + sepOne + "";
     }
-             
+    
+    std::string sharedPropsString = "";
+    std::vector <int>::iterator sharedPropsIt;
+    for (sharedPropsIt = sharedPropertiesIndexes.begin(); sharedPropsIt != sharedPropertiesIndexes.end(); sharedPropsIt++) {
+      int currentIndex = *sharedPropsIt;
+      sharedPropsString = sharedPropsString + sepOne + currentData[currentIndex];
+    }
+    
     std::istringstream sourceStringStream(currentSource);
     while (sourceStringStream) {
       std::string s;
       if (!getline(sourceStringStream, s, '+')) break;
-      s = s + sourcePropsString + fakeTargetString;
-      sepSources.push_back(s);
+	s = s + sharedPropsString + sourcePropsString + fakeTargetString;
+	sepSources.push_back(s);
     }
 
     std::istringstream targetStringStream(currentTarget);
     while (targetStringStream) {
       std::string s;
       if (!getline(targetStringStream, s, '+')) break;
-      s = s + fakeSourceString + targetPropsString;
+      s = s + sharedPropsString + fakeSourceString + targetPropsString;
       sepTargets.push_back(s);
     }
   }
-
+    
+  // Removing all duplicates from sources and targets here.
   std::sort(sepSources.begin(), sepSources.end());
   sepSources.erase(std::unique(sepSources.begin(), sepSources.end()), sepSources.end());
+
+  if (!excludeTargets) {
+    std::sort(sepTargets.begin(), sepTargets.end());
+    sepTargets.erase(std::unique(sepTargets.begin(), sepTargets.end()), sepTargets.end());
+  }
+
+  // Let's first make some vectors we need to make everything neat.
+  std::vector <std::string> fileVector;
+
   std::vector <std::string>::iterator ssI;
   std::vector <std::string> firstSources;
   for (ssI = sepSources.begin(); ssI != sepSources.end(); ssI++) {
@@ -238,34 +292,40 @@ bool CsvOutputNodes(InputTable *table, QString sourceSelection, QString targetSe
     currentSource = currentSource.substr(0, firstStop);
     firstSources.push_back(currentSource);
   }
-  
+
   std::vector <std::string>::iterator itSepSource;
   std::vector <std::string>::iterator itSepSourceFirst = firstSources.begin();
   for (itSepSource = sepSources.begin(); itSepSource != sepSources.end(); itSepSource++, itSepSourceFirst++) {
     std::string sepSource = *itSepSource;
     std::string first = *itSepSourceFirst;
-    fileOut << first << sepOne << sourceString << sepOne << sepSource;
-    fileOut << '\n';
+    std::string currentLine = first + sepOne + sourceString + sepOne + sepSource + '\n';
+    fileVector.push_back(currentLine);
   }
 
-  std::sort(sepTargets.begin(), sepTargets.end());
-  sepTargets.erase(std::unique(sepTargets.begin(), sepTargets.end()), sepTargets.end());
-  std::vector <std::string>::iterator stI;
-  std::vector <std::string> firstTargets;
-  for (stI = sepTargets.begin(); stI != sepTargets.end(); stI++) {
-    std::string currentTarget = *stI;
-    std::size_t firstStop = currentTarget.find_first_of(sepOne);
-    currentTarget = currentTarget.substr(0, firstStop);
-    firstTargets.push_back(currentTarget);
+  if (!excludeTargets) {
+    std::vector <std::string> firstTargets;
+    std::vector <std::string>::iterator stI;
+    for (stI = sepTargets.begin(); stI != sepTargets.end(); stI++) {
+      std::string currentTarget = *stI;
+      std::size_t firstStop = currentTarget.find_first_of(sepOne);
+      currentTarget = currentTarget.substr(0, firstStop);
+      firstTargets.push_back(currentTarget);
+    }
+    
+    std::vector <std::string>::iterator itSepTarget;
+    std::vector <std::string>::iterator itSepTargetFirst = firstTargets.begin();
+    for (itSepTarget = sepTargets.begin(); itSepTarget != sepTargets.end(); itSepTarget++, itSepTargetFirst++) {
+      std::string sepTarget = *itSepTarget;
+      std::string first = *itSepTargetFirst;
+      std::string currentLine = first + sepOne + targetString + sepOne + sepTarget + '\n';
+      fileVector.push_back(currentLine);
+    }
   }
-
-  std::vector <std::string>::iterator itSepTarget;
-  std::vector <std::string>::iterator itSepTargetFirst = firstTargets.begin();
-  for (itSepTarget = sepTargets.begin(); itSepTarget != sepTargets.end(); itSepTarget++, itSepTargetFirst++) {
-    std::string sepTarget = *itSepTarget;
-    std::string first = *itSepTargetFirst;
-    fileOut << first << sepOne << targetString << sepOne << sepTarget;
-    fileOut << '\n';
+  
+  std::vector <std::string>::iterator fileIterator;
+  for (fileIterator = fileVector.begin(); fileIterator != fileVector.end(); fileIterator++) {
+    std::string currentLine = *fileIterator;
+    fileOut << currentLine;
   }
   
   // And when we are finished, we can close the file.

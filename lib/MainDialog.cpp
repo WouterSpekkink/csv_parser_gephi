@@ -65,7 +65,8 @@ MainDialog::MainDialog(QWidget *parent) : QDialog(parent) {
 
   
   // Adding some new widgets
-  middleLabel = new QLabel(tr("<h3>Set Variables</h3>"));
+  middleLabel = new QLabel(tr("<h3>Configure Nodes and Edges</h3>"));
+  nodesEdgesLabel = new QLabel(tr("<h4>Set source and target nodes"));
   sourceSelector = new QComboBox(this);
   sourceSelector->addItem("-Select Source Node-");
   targetSelector = new QComboBox(this);
@@ -74,20 +75,34 @@ MainDialog::MainDialog(QWidget *parent) : QDialog(parent) {
   sourceSelector->setEnabled(false);
   targetSelector->setEnabled(false);
   setPropertiesButton->setEnabled(false);
+  excludeTargetsCheckBox = new QCheckBox("Exclude sources from nodes list\n(The associated properties will also be excluded)");
+  excludeTargetsCheckBox->setEnabled(false);
+  excludeTargets = false;
+  relationsLabel = new QLabel(tr("<h4>Set relationship type</h4>"));
+  relationsGroup = new QButtonGroup(this);
+  relationsGroup->setExclusive(true);
+  relationsDirectedCheckBox = new QCheckBox(tr("(Relationships are directed"));
+  relationsUndirectedCheckBox = new QCheckBox(tr("Relationships are undirected"));
+  relationsGroup->addButton(relationsDirectedCheckBox, 1);
+  relationsGroup->addButton(relationsUndirectedCheckBox, 2);
+  relationsUndirectedCheckBox->setEnabled(false);
+  relationsDirectedCheckBox->setEnabled(false);
+  relationsUndirectedCheckBox->setCheckState(Qt::Checked);
+  directedRelationships = false;
   //
   
   lowerLabel = new QLabel(tr("<h3>Save files</h3>")); // Just a title for another part of the dialog
   openFile = new QPushButton(tr("Open File")); // Button to select filename
   sepSelector = new QComboBox(this); // Combobox to select delimiter for columns.
-  sepSelector->addItem("-Select a delimiter-");
+  sepSelector->addItem(tr("-Select a delimiter-"));
   sepSelector->addItem(",");
   sepSelector->addItem(";");
   sepSelector->addItem(":");
   sepSelector->addItem("|");
-  sepTwoSwitcher = new QCheckBox("Separators within columns", this); // Checkbox to indicate whether multivalue columns exist.
+  sepTwoSwitcher = new QCheckBox(tr("Separators within columns"), this); // Checkbox to indicate whether multivalue columns exist.
   sepTwoSwitcher->setChecked(Qt::Unchecked); // We set it to unchecked by default.
   sepTwoSelector = new QComboBox(this); // Combobox to select delimiter for multivalue columns. The items are added later.
-  sepTwoSelector->addItem("-Select a second delimiter-"); 
+  sepTwoSelector->addItem(tr("-Select a second delimiter-")); 
   sepTwoSelector->setEnabled(false); // This combobox is only activted if the sepTwoSwitcher is checked.
   importFile = new QPushButton(tr("Import")); // Button to start importing files.
   saveNodes = new QPushButton(tr("Save Nodes File")); // Save button for nodes.
@@ -125,18 +140,17 @@ MainDialog::MainDialog(QWidget *parent) : QDialog(parent) {
   connect(sourceSelector, SIGNAL(currentIndexChanged(const QString &)), this, SLOT(setSourceSelection(const QString &)));
   connect(targetSelector, SIGNAL(currentIndexChanged(const QString &)), this, SLOT(setTargetSelection(const QString &)));
   connect(setPropertiesButton, SIGNAL(clicked()), this, SLOT(openPropertiesDialog()));
+  connect(inputTable, SIGNAL(importFinished()), this, SLOT(enableSave()));
+  connect(excludeTargetsCheckBox, SIGNAL(stateChanged(const int &)), this, SLOT(setExcludeTargets(const int &)));
+  connect(relationsGroup, SIGNAL(buttonClicked(const int &)), this, SLOT(setRelationshipType()));
 
-  
-  // I SHOULD CHANGE THIS SIGNAL LATER.
-  //connect(inputTable, SIGNAL(importFinished()), this, SLOT(enableSave()));
-
-  
   // The two buttons below call one of the save functions. Basically, they call one included in the appropriate functions of the CsvOutput header.
   connect(saveNodes, SIGNAL(clicked()), this, SLOT(saveNodesFile()));
   connect(saveEdges, SIGNAL(clicked()), this, SLOT(saveEdgesFile()));
 
   // Below the layout is created, which consists out of several building blocks. All the buttons and other widgets are layed out here.
   QVBoxLayout *topLayout = new QVBoxLayout;
+  topLayout->addWidget(topLabel);
   QHBoxLayout *topLayoutOne = new QHBoxLayout;
   topLayoutOne->addWidget(openFile);
   topLayoutOne->addWidget(sepSelector);
@@ -155,11 +169,18 @@ MainDialog::MainDialog(QWidget *parent) : QDialog(parent) {
   // Adding some new layout
   QVBoxLayout *middleLayout = new QVBoxLayout;
   QHBoxLayout *middleLayoutMain = new QHBoxLayout;
+  QVBoxLayout *middleLayoutBottom = new QVBoxLayout;
   middleLayoutMain->addWidget(sourceSelector);
   middleLayoutMain->addWidget(targetSelector);
   middleLayoutMain->addWidget(setPropertiesButton);
+  middleLayoutBottom->addWidget(excludeTargetsCheckBox);
+  middleLayoutBottom->addWidget(relationsLabel);
+  middleLayoutBottom->addWidget(relationsUndirectedCheckBox);
+  middleLayoutBottom->addWidget(relationsDirectedCheckBox);
   middleLayout->addWidget(middleLabel);
+  middleLayout->addWidget(nodesEdgesLabel);
   middleLayout->addLayout(middleLayoutMain);
+  middleLayout->addLayout(middleLayoutBottom);
   //
   
   QVBoxLayout *lowerMiddleLayout = new QVBoxLayout;
@@ -176,7 +197,6 @@ MainDialog::MainDialog(QWidget *parent) : QDialog(parent) {
   lowerLine->setFrameShape(QFrame::HLine);
 
   QVBoxLayout *mainLayout = new QVBoxLayout; 
-  mainLayout->addWidget(topLabel);
   topLayout->setContentsMargins(QMargins(15, 15, 15, 15));
   mainLayout->addLayout(topLayout);
   mainLayout->addWidget(topLine);
@@ -217,25 +237,25 @@ void MainDialog::setSepOne(const QString &selection) {
   
   if(sepOne == ",") {
     sepTwoSelector->clear();
-    sepTwoSelector->addItem("-Select a second delimiter-");
+    sepTwoSelector->addItem(tr("-Select a second delimiter-"));
     sepTwoSelector->addItem(";");
     sepTwoSelector->addItem(":");
     sepTwoSelector->addItem("|");
   } else if (sepOne == ";") {
     sepTwoSelector->clear();
-    sepTwoSelector->addItem("-Select a second delimiter-");
+    sepTwoSelector->addItem(tr("-Select a second delimiter-"));
     sepTwoSelector->addItem(",");
     sepTwoSelector->addItem(":");
     sepTwoSelector->addItem("|");
   } else if (sepOne == ":") {
     sepTwoSelector->clear();
-    sepTwoSelector->addItem("-Select a second delimiter-");
+    sepTwoSelector->addItem(tr("-Select a second delimiter-"));
     sepTwoSelector->addItem(",");
     sepTwoSelector->addItem(";");
     sepTwoSelector->addItem("|");
   } else if (sepOne == "|") {
     sepTwoSelector->clear();
-    sepTwoSelector->addItem("-Select a second delimiter-");
+    sepTwoSelector->addItem(tr("-Select a second delimiter-"));
     sepTwoSelector->addItem(",");
     sepTwoSelector->addItem(";");
     sepTwoSelector->addItem(":");
@@ -281,8 +301,8 @@ void MainDialog::fireFileSend()
 void MainDialog::enableVariables() {
   sourceSelector->clear();
   targetSelector->clear();
-  sourceSelector->addItem("-Select Source Node-");
-  targetSelector->addItem("-Select Target Node-");
+  sourceSelector->addItem(tr("-Select Source Node-"));
+  targetSelector->addItem(tr("-Select Target Node-"));
   std::vector<std::string> optionLabels = inputTable->GetHeader();
   std::vector<std::string>::iterator it;
   for(it = optionLabels.begin(); it != optionLabels.end(); it++) {
@@ -296,19 +316,29 @@ void MainDialog::enableVariables() {
 
 void MainDialog::setSourceSelection(const QString &selection) {
   sourceSelection = selection;
-  if (sourceSelection != "-Select Source Node-" && targetSelection != "-Select Target Node-" && sourceSelection != targetSelection) {
+  if (sourceSelection != tr("-Select Source Node-") && targetSelection != tr("-Select Target Node-") && sourceSelection != targetSelection) {
     setPropertiesButton->setEnabled(true);
+    relationsDirectedCheckBox->setEnabled(true);
+    relationsUndirectedCheckBox->setEnabled(true);
   } else {
     setPropertiesButton->setEnabled(false);
+    relationsDirectedCheckBox->setEnabled(false);
+    relationsUndirectedCheckBox->setEnabled(false);
   }
 }
 
 void MainDialog::setTargetSelection(const QString &selection) {
   targetSelection = selection;
-  if (sourceSelection != "-Select Source Node-" && targetSelection != "-Select Target Node-" && sourceSelection != targetSelection) {
+  if (sourceSelection != tr("-Select Source Node-") && targetSelection != tr("-Select Target Node-") && sourceSelection != targetSelection) {
     setPropertiesButton->setEnabled(true);
+    excludeTargetsCheckBox->setEnabled(true);
+    relationsDirectedCheckBox->setEnabled(true);
+    relationsUndirectedCheckBox->setEnabled(true);
   } else {
     setPropertiesButton->setEnabled(false);
+    excludeTargetsCheckBox->setEnabled(false);
+    relationsDirectedCheckBox->setEnabled(false);
+    relationsUndirectedCheckBox->setEnabled(false);
   }
 }
 
@@ -322,13 +352,18 @@ void MainDialog::openPropertiesDialog() {
   }
   propertiesDialog = new PropertiesDialog(this, tempQHeader, sourceSelection, targetSelection);
   propertiesDialog->setAttribute(Qt::WA_DeleteOnClose);
-  connect(propertiesDialog, SIGNAL(propertiesCloseWith(const QVector<QString> &, const QVector<QString> &)), this, SLOT(enableSave(const QVector<QString> &, const QVector<QString> &)));
+  connect(propertiesDialog, SIGNAL(propertiesCloseWith(const QVector<QString> &, const QVector<QString> &)), this, SLOT(setProperties(const QVector<QString> &, const QVector<QString> &)));
   propertiesDialog->exec();
 }
 
 // This function enables the save buttons.
-void MainDialog::enableSave(const QVector<QString> &sourceProps, const QVector<QString> &targetProps) {
-  QVectorIterator<QString> sIt(sourceProps);
+void MainDialog::enableSave() {
+  saveNodes->setEnabled(true);
+  saveEdges->setEnabled(true);
+}
+
+void MainDialog::setProperties(const QVector<QString> &sourceProps, const QVector<QString> &targetProps) {
+ QVectorIterator<QString> sIt(sourceProps);
   while (sIt.hasNext()) {
     QString QcurrentProperty = sIt.next();
     std::string currentProperty = QcurrentProperty.toUtf8().constData();
@@ -340,28 +375,42 @@ void MainDialog::enableSave(const QVector<QString> &sourceProps, const QVector<Q
     std::string currentProperty = QcurrentProperty.toUtf8().constData();
     targetProperties.push_back(currentProperty);
   }
-  saveNodes->setEnabled(true);
-  saveEdges->setEnabled(true);
+}
+
+void MainDialog::setRelationshipType() {
+  if (relationsGroup->checkedId() == 1) {
+    directedRelationships = true;
+  } else {
+    directedRelationships = false;
+  }
 }
 
 // This function triggers another function in the CsvOutput header that writes an edges file.
 void MainDialog::saveEdgesFile() {
   // We first the user ask for the desired filename for the new edges file.
-  QString QsaveFile = QFileDialog::getSaveFileName(this, tr("Save File"),"", "Comma Delimited Files (*.csv *.txt)");
+  QString QsaveFile = QFileDialog::getSaveFileName(this, tr("Save File"),"", tr("Comma Delimited Files (*.csv *.txt)"));
   std::string saveFile = QsaveFile.toStdString();
   std::string stdSep = sepOne.toStdString();
   // After preparing some necessary information, we call the CsvOutputEdges() function.
-  CsvOutputEdges(inputTable, sourceSelection, targetSelection, saveFile, stdSep);
+  CsvOutputEdges(inputTable, sourceSelection, targetSelection, directedRelationships, saveFile, stdSep);
+}
+
+void MainDialog::setExcludeTargets(const int &state) {
+  if(state == Qt::Checked) {
+    excludeTargets = true;
+  } else {
+    excludeTargets = false;
+  }
 }
 
 // This function triggers another function in the CsvOutput header that writes an nodes file.
 void MainDialog::saveNodesFile() {
   // We first the user ask for the desired filename for the new nodes file.
-  QString QsaveFile = QFileDialog::getSaveFileName(this, tr("Save File"),"", "Comma Delimited Files (*.csv *.txt)");
+  QString QsaveFile = QFileDialog::getSaveFileName(this, tr("Save File"),"", tr("Comma Delimited Files (*.csv *.txt)"));
   std::string saveFile = QsaveFile.toStdString();
   std::string stdSep = sepOne.toStdString();
   // After preparing some necessary information, we call the CsvOutputNodes() function.
-  CsvOutputNodes(inputTable, sourceSelection, targetSelection, sourceProperties, targetProperties, saveFile, stdSep);
+  CsvOutputNodes(inputTable, sourceSelection, targetSelection, sourceProperties, targetProperties, excludeTargets, saveFile, stdSep);
 }
 
 // This function make sure that the memory used by the instantiated InputTable class is freed up again. 
@@ -377,10 +426,17 @@ void MainDialog::resetFileImport() {
   saveNodes->setEnabled(false);
   saveEdges->setEnabled(false);
   sepTwoSelector->setEnabled(false);
-  sepTwoSwitcher->setChecked(Qt::Unchecked);
+  sepTwoSwitcher->setCheckState(Qt::Unchecked);
   sourceSelector->setEnabled(false);
   targetSelector->setEnabled(false);
   setPropertiesButton->setEnabled(false);
+  excludeTargetsCheckBox->setEnabled(false);
+  relationsDirectedCheckBox->setEnabled(false);
+  relationsUndirectedCheckBox->setEnabled(false);
+  relationsDirectedCheckBox->setCheckState(Qt::Unchecked);
+  relationsUndirectedCheckBox->setCheckState(Qt::Checked);
+  excludeTargets = false;
+  directedRelationships = false;
 }
 
 

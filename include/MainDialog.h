@@ -70,8 +70,11 @@ private slots:
   void openPropertiesDialog();
   void setSourceSelection(const QString &selection);
   void setTargetSelection(const QString &selection);
-  void enableSave(const QVector<QString> &sourceProps, const QVector<QString> &targetProps);
+  void enableSave();
+  void setProperties(const QVector<QString> &sourceProps, const QVector<QString> &targetProps);
+  void setRelationshipType();
   void saveEdgesFile();
+  void setExcludeTargets(const int &state);
   void saveNodesFile();
   void closing();
   void resetFileImport();
@@ -83,6 +86,7 @@ private:
 
   // Adding some new widgets
   QLabel *middleLabel;
+  QLabel *nodesEdgesLabel;
   QComboBox *sourceSelector;
   QComboBox *targetSelector;
   QPushButton *setPropertiesButton; // Should open a new dialog that allows the user to set the properties of the source and target with checkboxes.
@@ -91,7 +95,13 @@ private:
   std::vector <std::string> sourceProperties;
   std::vector <std::string> targetProperties;
   QDialog *propertiesDialog;
-  
+  QCheckBox *excludeTargetsCheckBox;
+  bool excludeTargets;
+  QLabel *relationsLabel;
+  QButtonGroup *relationsGroup;
+  QCheckBox *relationsDirectedCheckBox;
+  QCheckBox *relationsUndirectedCheckBox;
+  bool directedRelationships;
   // 
 
   QString fileName;
@@ -106,7 +116,6 @@ private:
   QPushButton *exitButton;
   QPushButton *saveNodes;
   QPushButton *saveEdges;
-  bool checked;
 };
 
 #endif

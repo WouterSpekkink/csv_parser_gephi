@@ -83,7 +83,7 @@ PropertiesDialog::PropertiesDialog(QWidget *parent, const QVector<QString> Qhead
   mainLayout->addLayout(lowerLayout);
 
   setLayout(mainLayout);
-  setWindowTitle("Set Properties");
+  setWindowTitle(tr("Set Properties"));
   setFixedHeight(sizeHint().height());
 }
 
