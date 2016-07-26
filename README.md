@@ -15,13 +15,13 @@ The program does not handle exceptions yet, which is something I plan to add soo
 
 # Building the program
 The program was built with C++, and it makes used of the C++ standard library, as well as the Qt4 library. Thus, to build the program, the Qt4 development library must be available on the machine. You should be able to build the platform on Linux, Windows, as well as OSX. What should be kept in mind is that I used C++11 functionality in the program, which requires the project file to be slight altered before building the program. First, you should generate the project file:
-	*qmake -project
+*	qmake -project
 	
 Then add the following line to the project file (csv-parser-gephi.pro) manually:
-	*QMAKE_CXXFLAGS += -std=c++11
+*	QMAKE_CXXFLAGS += -std=c++11
 	
 The user should also generate a makefile:
-	*qmake -makefile
+*	qmake -makefile
 	
 Then the program can be compiled, using the generated makefile. I used gcc compiler for this, with the command:
 *	make -k
