@@ -31,8 +31,7 @@
   to the disk, based on instructions received from the main dialog.
 
   If the user indicated that his/her input file uses multi-value columns, 
-  than these values are separated here. See the InputTable implementation to understand
-  why we use the '+' char as a separator for multiple values here.
+  than these values are separated here. 
 
  */
  
@@ -42,7 +41,7 @@
 #include <sstream>
 
 // This function writes an edges file to the disk.
-bool CsvOutputEdges(InputTable *table, QString sourceSelection, QString targetSelection, bool directedRelationships, std::string filename, std::string sepOne) {
+bool CsvOutputEdges(InputTable *table, QString sourceSelection, QString targetSelection, bool directedRelationships, std::string filename, std::string sepOne, std::string sepTwo) {
   // We point to the InputTable and we get all the stuff out that we need.
   InputTable *outputTable = table; // pointer to output table.
   std::vector <std::string> headers = outputTable->GetHeader();
@@ -51,7 +50,11 @@ bool CsvOutputEdges(InputTable *table, QString sourceSelection, QString targetSe
   int targetIndex = 0;
   std::string sourceString = sourceSelection.toUtf8().constData();
   std::string targetString = targetSelection.toUtf8().constData();
-
+  std::istringstream convertSep(sepTwo.c_str());
+  char sepTwoChar;
+  convertSep >> sepTwoChar;
+  
+    
   std::string relationshipType = "Undirected";
   if (directedRelationships) {
     relationshipType = "Directed";
@@ -88,13 +91,13 @@ bool CsvOutputEdges(InputTable *table, QString sourceSelection, QString targetSe
     std::istringstream sourceStream(currentSource);
     while (sourceStream) {
       std::string s;
-      if (!getline(sourceStream, s, '+')) break;
+      if (!getline(sourceStream, s, sepTwoChar)) break;
       sepSources.push_back(s);
     }
     std::istringstream targetStream(currentTarget);
     while (targetStream) {
       std::string s;
-      if (!getline(targetStream, s, '+')) break;
+      if (!getline(targetStream, s, sepTwoChar)) break;
       sepTargets.push_back(s);
     }
     std::vector <std::string>::iterator itSepSources;
@@ -113,12 +116,15 @@ bool CsvOutputEdges(InputTable *table, QString sourceSelection, QString targetSe
   return true;
 }
 
-bool CsvOutputNodes(InputTable *table, QString sourceSelection, QString targetSelection, std::vector <std::string> sourceProperties, std::vector<std::string> targetProperties, bool excludeTargets, std::string filename, std::string sepOne) {
+bool CsvOutputNodes(InputTable *table, QString sourceSelection, QString targetSelection, std::vector <std::string> sourceProperties, std::vector<std::string> targetProperties, bool excludeSources, std::string filename, std::string sepOne, std::string sepTwo) {
   // We point to the output table and get everything we need from it.
   InputTable *outputTable = table;
   std::vector <std::string> headers = outputTable->GetHeader();
   std::vector <std::vector <std::string> > data = outputTable->GetRowData();
-
+  std::istringstream convertSep(sepTwo.c_str());
+  char sepTwoChar;
+  convertSep >> sepTwoChar;
+    
   int sourceIndex = 0;
   int targetIndex = 0;
 
@@ -212,11 +218,11 @@ bool CsvOutputNodes(InputTable *table, QString sourceSelection, QString targetSe
   }
   
   // First we write the header of the file.
-  if (!excludeTargets) {
+  if (!excludeSources) {
     fileOut << "Id" << sepOne << "Type" << sepOne << "Label" << sharedPropertiesHeader << sourcePropertiesHeader << targetPropertiesHeader;
     fileOut << '\n';
   } else {
-    fileOut << "Id" << sepOne << "Type" << sepOne << "Label" << sourcePropertiesHeader;
+    fileOut << "Id" << sepOne << "Type" << sepOne << "Label" << targetPropertiesHeader;
     fileOut << '\n';
   }
 
@@ -258,7 +264,7 @@ bool CsvOutputNodes(InputTable *table, QString sourceSelection, QString targetSe
     std::istringstream sourceStringStream(currentSource);
     while (sourceStringStream) {
       std::string s;
-      if (!getline(sourceStringStream, s, '+')) break;
+      if (!getline(sourceStringStream, s, sepTwoChar)) break;
 	s = s + sharedPropsString + sourcePropsString + fakeTargetString;
 	sepSources.push_back(s);
     }
@@ -266,61 +272,62 @@ bool CsvOutputNodes(InputTable *table, QString sourceSelection, QString targetSe
     std::istringstream targetStringStream(currentTarget);
     while (targetStringStream) {
       std::string s;
-      if (!getline(targetStringStream, s, '+')) break;
+      if (!getline(targetStringStream, s, sepTwoChar)) break;
       s = s + sharedPropsString + fakeSourceString + targetPropsString;
       sepTargets.push_back(s);
     }
   }
     
   // Removing all duplicates from sources and targets here.
+  if (!excludeSources) {
   std::sort(sepSources.begin(), sepSources.end());
   sepSources.erase(std::unique(sepSources.begin(), sepSources.end()), sepSources.end());
-
-  if (!excludeTargets) {
-    std::sort(sepTargets.begin(), sepTargets.end());
-    sepTargets.erase(std::unique(sepTargets.begin(), sepTargets.end()), sepTargets.end());
   }
+
+  std::sort(sepTargets.begin(), sepTargets.end());
+  sepTargets.erase(std::unique(sepTargets.begin(), sepTargets.end()), sepTargets.end());
+
 
   // Let's first make some vectors we need to make everything neat.
   std::vector <std::string> fileVector;
-
-  std::vector <std::string>::iterator ssI;
-  std::vector <std::string> firstSources;
-  for (ssI = sepSources.begin(); ssI != sepSources.end(); ssI++) {
-    std::string currentSource = *ssI;
-    std::size_t firstStop = currentSource.find_first_of(sepOne);
-    currentSource = currentSource.substr(0, firstStop);
-    firstSources.push_back(currentSource);
-  }
-
-  std::vector <std::string>::iterator itSepSource;
-  std::vector <std::string>::iterator itSepSourceFirst = firstSources.begin();
-  for (itSepSource = sepSources.begin(); itSepSource != sepSources.end(); itSepSource++, itSepSourceFirst++) {
-    std::string sepSource = *itSepSource;
-    std::string first = *itSepSourceFirst;
-    std::string currentLine = first + sepOne + sourceString + sepOne + sepSource + '\n';
-    fileVector.push_back(currentLine);
-  }
-
-  if (!excludeTargets) {
-    std::vector <std::string> firstTargets;
-    std::vector <std::string>::iterator stI;
-    for (stI = sepTargets.begin(); stI != sepTargets.end(); stI++) {
-      std::string currentTarget = *stI;
-      std::size_t firstStop = currentTarget.find_first_of(sepOne);
-      currentTarget = currentTarget.substr(0, firstStop);
-      firstTargets.push_back(currentTarget);
+  if (!excludeSources) {
+    std::vector <std::string>::iterator ssI;
+    std::vector <std::string> firstSources;
+    for (ssI = sepSources.begin(); ssI != sepSources.end(); ssI++) {
+      std::string currentSource = *ssI;
+      std::size_t firstStop = currentSource.find_first_of(sepOne);
+      currentSource = currentSource.substr(0, firstStop);
+      firstSources.push_back(currentSource);
     }
     
-    std::vector <std::string>::iterator itSepTarget;
-    std::vector <std::string>::iterator itSepTargetFirst = firstTargets.begin();
-    for (itSepTarget = sepTargets.begin(); itSepTarget != sepTargets.end(); itSepTarget++, itSepTargetFirst++) {
-      std::string sepTarget = *itSepTarget;
-      std::string first = *itSepTargetFirst;
-      std::string currentLine = first + sepOne + targetString + sepOne + sepTarget + '\n';
+    std::vector <std::string>::iterator itSepSource;
+    std::vector <std::string>::iterator itSepSourceFirst = firstSources.begin();
+    for (itSepSource = sepSources.begin(); itSepSource != sepSources.end(); itSepSource++, itSepSourceFirst++) {
+      std::string sepSource = *itSepSource;
+      std::string first = *itSepSourceFirst;
+      std::string currentLine = first + sepOne + sourceString + sepOne + sepSource + '\n';
       fileVector.push_back(currentLine);
     }
   }
+  
+  std::vector <std::string> firstTargets;
+  std::vector <std::string>::iterator stI;
+  for (stI = sepTargets.begin(); stI != sepTargets.end(); stI++) {
+    std::string currentTarget = *stI;
+    std::size_t firstStop = currentTarget.find_first_of(sepOne);
+    currentTarget = currentTarget.substr(0, firstStop);
+    firstTargets.push_back(currentTarget);
+  }
+  
+  std::vector <std::string>::iterator itSepTarget;
+  std::vector <std::string>::iterator itSepTargetFirst = firstTargets.begin();
+  for (itSepTarget = sepTargets.begin(); itSepTarget != sepTargets.end(); itSepTarget++, itSepTargetFirst++) {
+    std::string sepTarget = *itSepTarget;
+    std::string first = *itSepTargetFirst;
+    std::string currentLine = first + sepOne + targetString + sepOne + sepTarget + '\n';
+    fileVector.push_back(currentLine);
+  }
+  
   
   std::vector <std::string>::iterator fileIterator;
   for (fileIterator = fileVector.begin(); fileIterator != fileVector.end(); fileIterator++) {

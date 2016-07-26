@@ -74,7 +74,7 @@ private slots:
   void setProperties(const QVector<QString> &sourceProps, const QVector<QString> &targetProps);
   void setRelationshipType();
   void saveEdgesFile();
-  void setExcludeTargets(const int &state);
+  void setExcludeSources(const int &state);
   void saveNodesFile();
   void closing();
   void resetFileImport();
@@ -95,13 +95,14 @@ private:
   std::vector <std::string> sourceProperties;
   std::vector <std::string> targetProperties;
   QDialog *propertiesDialog;
-  QCheckBox *excludeTargetsCheckBox;
-  bool excludeTargets;
+  QCheckBox *excludeSourcesCheckBox;
+  bool excludeSources;
   QLabel *relationsLabel;
   QButtonGroup *relationsGroup;
   QCheckBox *relationsDirectedCheckBox;
   QCheckBox *relationsUndirectedCheckBox;
   bool directedRelationships;
+  QLabel *warningSeps;
   // 
 
   QString fileName;

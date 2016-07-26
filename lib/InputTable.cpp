@@ -101,16 +101,7 @@ void InputTable::ReadFileOne(const std::string &inputFile, const char &delOne, c
     
     // First we get the lines of data, one by one.
     std::string buffer;
-
-    // I also decided to set the second separator to a standard symbol that cannot be used by the user.
-    // Then the CsvOutput functions can simply use that symbol to separate the values again.
-    if(!getline(myFile, buffer)) break;
-    for (std::string::size_type i = 0; i != buffer.length(); i++) {
-      if (buffer[i] == delTwo) {
-	buffer[i] = '+';
-      }
-    }
-  
+    if (!getline(myFile, buffer)) break;
     // Next, we load the string into an istringstream and cut it up in smaller pieces.
     std::istringstream stringStream(buffer);
     // We make a vector of strings to hold the pieces of this line of data.
