@@ -70,7 +70,6 @@ private slots:
   void openPropertiesDialog();
   void setSourceSelection(const QString &selection);
   void setTargetSelection(const QString &selection);
-  void enableSave();
   void setProperties(const QVector<QString> &sourceProps, const QVector<QString> &targetProps);
   void setRelationshipType();
   void saveEdgesFile();
@@ -80,43 +79,41 @@ private slots:
   void resetFileImport();
   
 private:
-  QLabel *topLabel;
-  QLabel *lowerLabel;
-  QLabel *noteSeps;
+  QPointer<QLabel> topLabel;
+  QPointer<QLabel> lowerLabel;
+  QPointer<QLabel> noteSeps;
+  QPointer<QLabel> middleLabel;
+  QPointer<QLabel> nodesEdgesLabel;
+  QPointer<QComboBox> sourceSelector;
+  QPointer<QComboBox> targetSelector;
+  QPointer<QPushButton> setPropertiesButton; 
+  QPointer<QDialog> propertiesDialog;
+  QPointer<QCheckBox> excludeSourcesCheckBox;
+  QPointer<QLabel> relationsLabel;
+  QPointer<QButtonGroup> relationsGroup;
+  QPointer<QCheckBox> relationsDirectedCheckBox;
+  QPointer<QCheckBox> relationsUndirectedCheckBox;
+  QPointer<QLabel> warningSeps;
+  QPointer<QPushButton> openFile;
+  QPointer<QComboBox> sepSelector;
+  QPointer<QComboBox> sepTwoSelector;
+  QPointer<QCheckBox> sepTwoSwitcher;
+  QPointer<QPushButton> importFile;
+  QPointer<InputTable> inputTable;
+  QPointer<QPushButton> exitButton;
+  QPointer<QPushButton> saveNodes;
+  QPointer<QPushButton> saveEdges;
 
-  // Adding some new widgets
-  QLabel *middleLabel;
-  QLabel *nodesEdgesLabel;
-  QComboBox *sourceSelector;
-  QComboBox *targetSelector;
-  QPushButton *setPropertiesButton; // Should open a new dialog that allows the user to set the properties of the source and target with checkboxes.
+  bool excludeSources;
+  bool directedRelationships;
+  QString fileName;
+  QString sepOne;
+  QString sepTwo;
   QString sourceSelection;
   QString targetSelection;
   std::vector <std::string> sourceProperties;
   std::vector <std::string> targetProperties;
-  QDialog *propertiesDialog;
-  QCheckBox *excludeSourcesCheckBox;
-  bool excludeSources;
-  QLabel *relationsLabel;
-  QButtonGroup *relationsGroup;
-  QCheckBox *relationsDirectedCheckBox;
-  QCheckBox *relationsUndirectedCheckBox;
-  bool directedRelationships;
-  QLabel *warningSeps;
-  // 
 
-  QString fileName;
-  QString sepOne;
-  QString sepTwo;
-  QPushButton *openFile;
-  QComboBox *sepSelector;
-  QComboBox *sepTwoSelector;
-  QCheckBox *sepTwoSwitcher;
-  QPushButton *importFile;
-  InputTable *inputTable;
-  QPushButton *exitButton;
-  QPushButton *saveNodes;
-  QPushButton *saveEdges;
 };
 
 #endif

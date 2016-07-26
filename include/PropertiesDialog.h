@@ -24,6 +24,12 @@
   
 */
 
+/*
+  ===NOTES===
+  See propertiesDialog.cpp for more details on what this class and its methods do.  
+
+*/
+
 #ifndef PROPERTIESDIALOG_H
 #define PROPERTIESDIALOG_H
 
@@ -35,9 +41,9 @@ class PropertiesDialog : public QDialog {
   Q_OBJECT
 
 public:
-  PropertiesDialog(QWidget *parent = 0);
+  PropertiesDialog(QWidget *parent);
   
-  PropertiesDialog(QWidget *parent = 0, QVector<QString> = QVector<QString>(), QString source = QString(), QString target = QString());
+  PropertiesDialog(QWidget *parent, QVector<QString> = QVector<QString>(), QString source = QString(), QString target = QString());
     
   ~PropertiesDialog() {};
 
@@ -53,20 +59,18 @@ private slots:
   void saveAndClose();
       
 private:
-  QLabel *sourceLabel;
-  QLabel *targetLabel;
+  QPointer<QLabel> sourceLabel;
+  QPointer<QLabel> targetLabel;
+  QVector<QPointer<QCheckBox>> sourceVector;
+  QVector<QPointer<QCheckBox>> targetVector;    
+  QPointer<QPushButton> saveCloseButton;
+  QPointer<QPushButton> cancelButton;
   
-  QString sourceNode;
-  QString targetNode;
-  
-  QVector<QCheckBox*> sourceVector;
-  QVector<QCheckBox*> targetVector;    
-
-  QPushButton *saveCloseButton;
-  QPushButton *cancelButton;
-
   QVector<QString> sourceProperties;
   QVector<QString> targetProperties;
+  QString sourceNode;
+  QString targetNode;
+
 };
   
 

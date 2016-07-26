@@ -41,25 +41,25 @@
 #include <sstream>
 
 // This function writes an edges file to the disk.
-bool CsvOutputEdges(InputTable *table, QString sourceSelection, QString targetSelection, bool directedRelationships, std::string filename, std::string sepOne, std::string sepTwo) {
-  // We point to the InputTable and we get all the stuff out that we need.
-  InputTable *outputTable = table; // pointer to output table.
-  std::vector <std::string> headers = outputTable->GetHeader();
+bool CsvOutputEdges(InputTable *table, const QString sourceSelection, const QString targetSelection, const bool directedRelationships, const std::string filename, const std::string sepOne, const std::string sepTwo) {
+  // We point to the InputTable and we get all the stuff out that we need from the input table and the function arguments.
+  InputTable *outputTable = table; 
+  std::vector <std::string> headers = outputTable->GetHeader();  
   std::vector <std::vector <std::string> > data = outputTable->GetRowData();
-  int sourceIndex = 0;
-  int targetIndex = 0;
   std::string sourceString = sourceSelection.toUtf8().constData();
   std::string targetString = targetSelection.toUtf8().constData();
-  std::istringstream convertSep(sepTwo.c_str());
-  char sepTwoChar;
-  convertSep >> sepTwoChar;
-  
-    
   std::string relationshipType = "Undirected";
   if (directedRelationships) {
     relationshipType = "Directed";
   }
-
+  std::istringstream convertSep(sepTwo.c_str());
+  char sepTwoChar;
+  convertSep >> sepTwoChar;
+    
+  // We need to know in which part of the data vector the source and target node reside.
+  // We create and set an index to achieve that.
+  int sourceIndex = 0;
+  int targetIndex = 0;
   for (std::vector<std::string>::size_type i = 0; i != headers.size(); i++) {
     std::string currentString = headers[i];
     if (currentString == sourceString) {
@@ -80,14 +80,16 @@ bool CsvOutputEdges(InputTable *table, QString sourceSelection, QString targetSe
   fileOut << "Source" << sepOne << "Target" << sepOne << "Weight" << sepOne << "Type";
   fileOut << '\n';
 
+  // Then we iterate through the data vector, find the appropriate entries, and write them to our file.
   std::vector <std::vector <std::string> >::iterator itData;
-  
   for (itData = data.begin(); itData != data.end(); itData++) {
     std::vector <std::string> currentData = *itData;
     std::string currentSource = currentData[sourceIndex];
     std::string currentTarget = currentData[targetIndex];
     std::vector <std::string> sepSources;
     std::vector <std::string> sepTargets;
+
+    // Some of the entries may have multiple values in one string. We need to separate these now.
     std::istringstream sourceStream(currentSource);
     while (sourceStream) {
       std::string s;
@@ -102,6 +104,8 @@ bool CsvOutputEdges(InputTable *table, QString sourceSelection, QString targetSe
     }
     std::vector <std::string>::iterator itSepSources;
     std::vector <std::string>::iterator itSepTargets;
+
+    // After making sures that the values have been separated where necessary, we can write the bulk of our file.
     for (itSepSources = sepSources.begin(); itSepSources != sepSources.end(); itSepSources++) {
       std::string currentSepSource = *itSepSources;
       for (itSepTargets = sepTargets.begin(); itSepTargets != sepTargets.end(); itSepTargets++) {
@@ -111,33 +115,27 @@ bool CsvOutputEdges(InputTable *table, QString sourceSelection, QString targetSe
       }
     }
   }
-  // And we can close the file.
+  // And after that we can close the file and end the function.
   fileOut.close();
   return true;
 }
 
 bool CsvOutputNodes(InputTable *table, QString sourceSelection, QString targetSelection, std::vector <std::string> sourceProperties, std::vector<std::string> targetProperties, bool excludeSources, std::string filename, std::string sepOne, std::string sepTwo) {
-  // We point to the output table and get everything we need from it.
+  // We point to the output table and get everything we need from the table and the function arguments.
   InputTable *outputTable = table;
   std::vector <std::string> headers = outputTable->GetHeader();
   std::vector <std::vector <std::string> > data = outputTable->GetRowData();
   std::istringstream convertSep(sepTwo.c_str());
   char sepTwoChar;
   convertSep >> sepTwoChar;
-    
-  int sourceIndex = 0;
-  int targetIndex = 0;
-
-  std::vector <int> sourcePropertiesIndexes;
-  std::vector <int> targetPropertiesIndexes;
-  std::vector <int> sharedPropertiesIndexes;
-
-  std::vector <std::string> sharedProperties;
-
   std::string sourceString = sourceSelection.toUtf8().constData();
   std::string targetString = targetSelection.toUtf8().constData();
-  std::string sharedString = "";
-
+  /* 
+     sharedProperties will be a new vector that holds the properties that the source and target node have in common (if any).
+     These will be deleted from the original vectors for source and target properties. This is done to make sure that they
+     are not include twice when writing the file. 
+  */
+  std::vector <std::string> sharedProperties;
   for (std::vector <std::string>::size_type i = 0; i != sourceProperties.size(); i++) {
     for (std::vector <std::string>::size_type j = 0; j != targetProperties.size(); j++) {
       if (sourceProperties[i] == targetProperties[j]) {
@@ -148,7 +146,19 @@ bool CsvOutputNodes(InputTable *table, QString sourceSelection, QString targetSe
     }
   }
 
+  /* 
+     We need to know in which part of the data vector the source and target node reside.
+     We create and set an index to achieve that.
+     We need to do something similar for the properties of the nodes and the edges.
+     Because there can be multiple properties per node, we make a vector of index numbers for each of these.
+  */
+  int sourceIndex = 0;
+  int targetIndex = 0;
+  std::vector <int> sourcePropertiesIndexes;
+  std::vector <int> targetPropertiesIndexes;
+  std::vector <int> sharedPropertiesIndexes;
   for (std::vector<std::string>::size_type i = 0; i != headers.size(); i++) {
+    // First we set the indexes for our source and target nodes.
     std::string currentString = headers[i];
     if (currentString == sourceString) {
       sourceIndex = i;
@@ -156,8 +166,7 @@ bool CsvOutputNodes(InputTable *table, QString sourceSelection, QString targetSe
     if (currentString == targetString) {
       targetIndex = i;
     }
-
-    // Here we make indexes for our source properties, so we know from which columns they originate.
+    // Here we make indexes for our source properties.
     std::vector <std::string>::iterator sourcePropertiesIt;
     for (sourcePropertiesIt = sourceProperties.begin(); sourcePropertiesIt != sourceProperties.end(); sourcePropertiesIt++) {
       std::string currentSourceProperty = *sourcePropertiesIt;
@@ -165,8 +174,7 @@ bool CsvOutputNodes(InputTable *table, QString sourceSelection, QString targetSe
 	sourcePropertiesIndexes.push_back(i);
       }
     }
-   
-    // Here we make indexes for our target properties, so we know from which columns they originate.
+    // Here we make indexes for our target properties.
     std::vector <std::string>::iterator targetPropertiesIt;
     for (targetPropertiesIt = targetProperties.begin(); targetPropertiesIt != targetProperties.end(); targetPropertiesIt++) {
       std::string currentTargetProperty = *targetPropertiesIt;
@@ -174,6 +182,7 @@ bool CsvOutputNodes(InputTable *table, QString sourceSelection, QString targetSe
 	targetPropertiesIndexes.push_back(i);
       }
     }
+    // And here we set the indexes for the shared properties.
     std::vector <std::string>::iterator sharedPropertiesIt;
     for (sharedPropertiesIt = sharedProperties.begin(); sharedPropertiesIt != sharedProperties.end(); sharedPropertiesIt++) {
       std::string currentSharedProperty = *sharedPropertiesIt;
@@ -182,7 +191,9 @@ bool CsvOutputNodes(InputTable *table, QString sourceSelection, QString targetSe
       }
     }
   }
-  
+
+  // We need to make sure that our output file header also takes into account any properties that are to be included.
+  // We create the different parts of the header here.
   std::string sourcePropertiesHeader = "";
   if (sourceProperties.size() > 0) {
     std::vector <std::string>::iterator sourcePropertiesIt;
@@ -191,8 +202,6 @@ bool CsvOutputNodes(InputTable *table, QString sourceSelection, QString targetSe
       sourcePropertiesHeader = sourcePropertiesHeader + sepOne + currentSourceHeader;
     }
   }
-
-  
   std::string targetPropertiesHeader = "";    
   if (targetProperties.size() > 0) {
     std::vector <std::string>::iterator targetPropertiesIt;
@@ -201,7 +210,6 @@ bool CsvOutputNodes(InputTable *table, QString sourceSelection, QString targetSe
       targetPropertiesHeader = targetPropertiesHeader + sepOne + currentTargetHeader;
     }
   }
-  
   std::string sharedPropertiesHeader = "";
   if (sharedProperties.size() >0) {
     std::vector <std::string>::iterator sharedPropertiesIt;
@@ -217,7 +225,7 @@ bool CsvOutputNodes(InputTable *table, QString sourceSelection, QString targetSe
     return false;
   }
   
-  // First we write the header of the file.
+  // First we write the header of the file. We add a conditional to handle the possibility that source nodes are excluded.
   if (!excludeSources) {
     fileOut << "Id" << sepOne << "Type" << sepOne << "Label" << sharedPropertiesHeader << sourcePropertiesHeader << targetPropertiesHeader;
     fileOut << '\n';
@@ -226,16 +234,19 @@ bool CsvOutputNodes(InputTable *table, QString sourceSelection, QString targetSe
     fileOut << '\n';
   }
 
-  // And then we process all the data and eventually write it to the file.
+  // And then we iterate through our dat and process them before we write the bulk of the file.
   std::vector <std::vector <std::string> >::iterator itData;
 
+  // We still need to separate entries with multiple values. We make two vectors that will store these
+  // separated entries.
   std::vector <std::string> sepSources;
   std::vector <std::string> sepTargets;
-  
   for (itData = data.begin(); itData != data.end(); itData++) {
     std::vector <std::string> currentData = *itData;
     std::string currentSource = currentData[sourceIndex];
     std::string currentTarget = currentData[targetIndex];
+    // The so-called fake string will act as dummies that make sure that the file lines of the source and target nodes
+    // are of the same length and have the same columns. Basically, they represent empty cells in the output file.
     std::string fakeSourceString = "";
     std::string sourcePropsString = "";
     std::vector <int>::iterator sourcePropsIt;
@@ -244,7 +255,6 @@ bool CsvOutputNodes(InputTable *table, QString sourceSelection, QString targetSe
       sourcePropsString = sourcePropsString + sepOne + currentData[currentIndex];
       fakeSourceString = fakeSourceString + sepOne + "";
     }
-
     std::string targetPropsString = "";
     std::string fakeTargetString = "";
     std::vector <int>::iterator targetPropsIt;
@@ -253,14 +263,13 @@ bool CsvOutputNodes(InputTable *table, QString sourceSelection, QString targetSe
       targetPropsString = targetPropsString + sepOne + currentData[currentIndex];
       fakeTargetString = fakeTargetString + sepOne + "";
     }
-    
     std::string sharedPropsString = "";
     std::vector <int>::iterator sharedPropsIt;
     for (sharedPropsIt = sharedPropertiesIndexes.begin(); sharedPropsIt != sharedPropertiesIndexes.end(); sharedPropsIt++) {
       int currentIndex = *sharedPropsIt;
       sharedPropsString = sharedPropsString + sepOne + currentData[currentIndex];
     }
-    
+    // And here the entries with multiple values are separated out. We don't do that for properties.
     std::istringstream sourceStringStream(currentSource);
     while (sourceStringStream) {
       std::string s;
@@ -268,7 +277,6 @@ bool CsvOutputNodes(InputTable *table, QString sourceSelection, QString targetSe
 	s = s + sharedPropsString + sourcePropsString + fakeTargetString;
 	sepSources.push_back(s);
     }
-
     std::istringstream targetStringStream(currentTarget);
     while (targetStringStream) {
       std::string s;
@@ -278,28 +286,33 @@ bool CsvOutputNodes(InputTable *table, QString sourceSelection, QString targetSe
     }
   }
     
-  // Removing all duplicates from sources and targets here.
+  // There will be duplicates in the list of nodes. These are removed here.
   if (!excludeSources) {
   std::sort(sepSources.begin(), sepSources.end());
   sepSources.erase(std::unique(sepSources.begin(), sepSources.end()), sepSources.end());
   }
-
   std::sort(sepTargets.begin(), sepTargets.end());
   sepTargets.erase(std::unique(sepTargets.begin(), sepTargets.end()), sepTargets.end());
 
-
-  // Let's first make some vectors we need to make everything neat.
+  /*
+    In the above we have basically prepared our data for writing. The actual writing happens below.
+    Instead of writing immediately to a file, the lines for the file are first put into a vector,
+    which is then written to a file incrementaly. This is mostly an artefact of a function I decided
+    no longer to include in the program, but I don't dislike this procedure, so I kept it.
+  */
   std::vector <std::string> fileVector;
   if (!excludeSources) {
     std::vector <std::string>::iterator ssI;
     std::vector <std::string> firstSources;
+    // Below we separate out the name of the current node. We need to have it separate because we will
+    // include the name in the file twice.
     for (ssI = sepSources.begin(); ssI != sepSources.end(); ssI++) {
       std::string currentSource = *ssI;
       std::size_t firstStop = currentSource.find_first_of(sepOne);
       currentSource = currentSource.substr(0, firstStop);
       firstSources.push_back(currentSource);
     }
-    
+    // Here we create the actual line of data to be used as output.
     std::vector <std::string>::iterator itSepSource;
     std::vector <std::string>::iterator itSepSourceFirst = firstSources.begin();
     for (itSepSource = sepSources.begin(); itSepSource != sepSources.end(); itSepSource++, itSepSourceFirst++) {
@@ -309,7 +322,8 @@ bool CsvOutputNodes(InputTable *table, QString sourceSelection, QString targetSe
       fileVector.push_back(currentLine);
     }
   }
-  
+
+  // And here we basically do the same for the target nodes.
   std::vector <std::string> firstTargets;
   std::vector <std::string>::iterator stI;
   for (stI = sepTargets.begin(); stI != sepTargets.end(); stI++) {
@@ -318,7 +332,6 @@ bool CsvOutputNodes(InputTable *table, QString sourceSelection, QString targetSe
     currentTarget = currentTarget.substr(0, firstStop);
     firstTargets.push_back(currentTarget);
   }
-  
   std::vector <std::string>::iterator itSepTarget;
   std::vector <std::string>::iterator itSepTargetFirst = firstTargets.begin();
   for (itSepTarget = sepTargets.begin(); itSepTarget != sepTargets.end(); itSepTarget++, itSepTargetFirst++) {
@@ -328,7 +341,8 @@ bool CsvOutputNodes(InputTable *table, QString sourceSelection, QString targetSe
     fileVector.push_back(currentLine);
   }
   
-  
+  // Now that we have put all the data we want to write in the file vector, we iterate through the vector
+  // and actually write the file.
   std::vector <std::string>::iterator fileIterator;
   for (fileIterator = fileVector.begin(); fileIterator != fileVector.end(); fileIterator++) {
     std::string currentLine = *fileIterator;

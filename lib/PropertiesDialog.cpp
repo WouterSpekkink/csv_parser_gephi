@@ -24,28 +24,36 @@
   
 */
 
+/*
+  ==NOTES==
+  This class is a dialog that allows the user to assign properties to the source
+  and target nodes that (s)he selected earlier. It takes information from the main dialog,
+  which originates from an instant of the InputTable class used by the main dialog. It then
+  dynamically creates lists of checkboxes that the user can use to assign the properties.
+*/
+
 #include "../include/PropertiesDialog.h"
 #include <vector>
 #include <string>
+#include <QPointer>
 
+// This is the default constructor, but I actually don't use it.
 PropertiesDialog::PropertiesDialog(QWidget *parent) : QDialog(parent) {}
 
+// This is the main constructor.
 PropertiesDialog::PropertiesDialog(QWidget *parent, const QVector<QString> Qheader, const QString sourceInput, const QString targetInput) {
-  sourceLabel = new QLabel(tr("Source"));
-  targetLabel = new QLabel(tr("Target"));
-
+  // We first set up the standard elements of the interface, which are only two labels and two buttons.
+  sourceLabel = new QLabel(sourceInput);
+  targetLabel = new QLabel(targetInput);
   saveCloseButton = new QPushButton(tr("Save and Close"));
   cancelButton = new QPushButton(tr("Cancel"));
 
-  connect(saveCloseButton, SIGNAL(clicked()), this, SLOT(saveAndClose()));
-  connect(cancelButton, SIGNAL(clicked()), this, SLOT(cancel()));
-  
-  // Creating two lists of check boxes.
+  // We dynamically create two lists of checkboxes as well, which represent potential properties.
+  // Only variables that were not already selected as source and target nodes are included as options.
   QVectorIterator<QString> it(Qheader);
   while (it.hasNext()) {
-    QCheckBox *tempBoxOne = new QCheckBox(it.peekNext(), this);
-    QCheckBox *tempBoxTwo = new QCheckBox(it.next(), this);
-
+    QPointer<QCheckBox> tempBoxOne = new QCheckBox(it.peekNext(), this);
+    QPointer<QCheckBox> tempBoxTwo = new QCheckBox(it.next(), this);
     if (tempBoxOne->text() != sourceInput && tempBoxOne->text() != targetInput) {
       sourceVector.push_back(tempBoxOne);
     } else {
@@ -57,23 +65,30 @@ PropertiesDialog::PropertiesDialog(QWidget *parent, const QVector<QString> Qhead
       delete tempBoxTwo;
     }
   }
-
+  
+  // We then set up the signals. Basically, save and close is the only signal that will send information from the properties dialog
+  // to the main dialog.
+  connect(saveCloseButton, SIGNAL(clicked()), this, SLOT(saveAndClose()));
+  connect(cancelButton, SIGNAL(clicked()), this, SLOT(cancel())); // In case the user decides not to set properties.
+  
+  // Then we create our layout. 
   QVBoxLayout *mainLayout = new QVBoxLayout;
   QHBoxLayout *mainBodyLayout = new QHBoxLayout;
   QVBoxLayout *mainBodyLeft = new QVBoxLayout;
   QVBoxLayout *mainBodyRight = new QVBoxLayout;
 
   mainBodyLeft->addWidget(sourceLabel);
-  QVectorIterator<QCheckBox*> sI(sourceVector);
+  QVectorIterator<QPointer<QCheckBox>> sI(sourceVector);
   while (sI.hasNext()) {
     mainBodyLeft->addWidget(sI.next());
   }
   
   mainBodyRight->addWidget(targetLabel);
-  QVectorIterator<QCheckBox*> tI(targetVector);
+  QVectorIterator<QPointer<QCheckBox>> tI(targetVector);
   while (tI.hasNext()) {
     mainBodyRight->addWidget(tI.next());
   }
+  
   mainBodyLayout->addLayout(mainBodyLeft);
   mainBodyLayout->addLayout(mainBodyRight);
   mainLayout->addLayout(mainBodyLayout);
@@ -85,24 +100,27 @@ PropertiesDialog::PropertiesDialog(QWidget *parent, const QVector<QString> Qhead
   setLayout(mainLayout);
   setWindowTitle(tr("Set Properties"));
   setFixedHeight(sizeHint().height());
+  // And that finishes our constructor
 }
 
+// This is the function that is called if the user clicks the cancel button.
+// We basically just clear our vectors of pointers and then exit. We also let the main dialog know that nothing was saved.
 void PropertiesDialog::cancel() {
   qDeleteAll(sourceVector);
   sourceVector.clear();
   qDeleteAll(targetVector);
   targetVector.clear();
-
-  // I should find a way to give some stuff back to the main dialog.
-  // Maybe just two vectors.
-
   emit propertiesCloseWithout();
   this->close();
 }
 
+/*
+  This is the function that is called if the user clicks the save and exit button.
+  We first process the selected properties, put them in vectors, and send them to the main dialog.
+  We then clear the vectors of pointers and exit.
+*/
 void PropertiesDialog::saveAndClose() {
-  
-  QVectorIterator<QCheckBox*> spI(sourceVector);
+  QVectorIterator<QPointer<QCheckBox>> spI(sourceVector);
   spI.toFront();
   while (spI.hasNext()) {
     QCheckBox *tempBox = spI.next();
@@ -110,8 +128,7 @@ void PropertiesDialog::saveAndClose() {
       sourceProperties.push_back(tempBox->text());
     }
   }
-
-  QVectorIterator<QCheckBox*> tpI(targetVector);
+  QVectorIterator<QPointer<QCheckBox>> tpI(targetVector);
   tpI.toFront();
   while (tpI.hasNext()) {
     QCheckBox *tempBox = tpI.next();
@@ -119,12 +136,10 @@ void PropertiesDialog::saveAndClose() {
       targetProperties.push_back(tempBox->text());
      }
    }
-
   emit propertiesCloseWith(sourceProperties, targetProperties);
   qDeleteAll(sourceVector);
   sourceVector.clear();
   qDeleteAll(targetVector);
   targetVector.clear();
-
   this->close();
 }

@@ -43,58 +43,12 @@ MainDialog::MainDialog(QWidget *parent) : QDialog(parent) {
   /* 
      InputTable is a class that imports a user-selected csv-file. The main dialog communicates
      with an instance of InputTable to let it know which filename was selected, and what delimiters are used.
-     The created instance of InputTable then imports the data and processes it, so that it can be used by CsvOutput.
-     The instance of InputTable then only let's the main dialog know that it has processed the data.
-     The main dialog uses this information to activate some parts of the interface that are deactivated by default.
-     This includes the save buttons for the node and edges file.
-     The user can also quit the program from the main dialog.
+     The created instance of InputTable then imports the data and processes it, so that it can be used by CsvOutput 
+     and the properties dialog. The instance of InputTable then only let's the main dialog know that it has processed the data.
   */
   inputTable = new InputTable(); 
   exitButton = new QPushButton(tr("Exit Program")); // The exit button
-  topLabel = new QLabel(tr("<h3>File import</h3>")); // Just a title for part of the dialog.
-
-  /* 
-     The program allows the user to import files that have multiple values in a single cell, separated by columns.
-     However, it is not allowed to use the same separator/delimiter for both the columns, and the values within cells,
-     because that would make it impossible for the program to distinguish between single value and multi value columns.
-     The program is made so that the same delimiters cannot be used twice, and the label below informs the user of this.
-  */
-  noteSeps = new QLabel(tr("Note: You cannot use the same delimiter twice,\n because that makes the file unreadable to the program."));
-
-  /* 
-     The middle part of the main dialog is where the user sets the source and target nodes for which a nodes list and edges list
-     have to be created. The user can also assign properties to the nodes, for which another dialog is opened (declared elsewhere).
-     The user should also indicate whether the target nodes should be included from the nodes list or not, which may be desirable 
-     in some cases.
-  */
-  middleLabel = new QLabel(tr("<h3>Configure Nodes and Edges</h3>"));
-  nodesEdgesLabel = new QLabel(tr("<h4>Set source and target nodes"));
-  sourceSelector = new QComboBox(this);
-  sourceSelector->addItem("-Select Source Node-");
-  targetSelector = new QComboBox(this);
-  targetSelector->addItem("-Select Target Node-");
-  setPropertiesButton = new QPushButton(tr("Set Properties"));
-  sourceSelector->setEnabled(false);
-  targetSelector->setEnabled(false);
-  setPropertiesButton->setEnabled(false);
-  excludeSourcesCheckBox = new QCheckBox("Exclude sources from nodes list\n(The associated properties will also be excluded)");
-  excludeSourcesCheckBox->setEnabled(false);
-  excludeSources = false;
-  relationsLabel = new QLabel(tr("<h4>Set relationship type</h4>"));
-  relationsGroup = new QButtonGroup(this);
-  relationsGroup->setExclusive(true);
-  relationsDirectedCheckBox = new QCheckBox(tr("(Relationships are directed"));
-  relationsUndirectedCheckBox = new QCheckBox(tr("Relationships are undirected"));
-  relationsGroup->addButton(relationsDirectedCheckBox, 1);
-  relationsGroup->addButton(relationsUndirectedCheckBox, 2);
-  relationsUndirectedCheckBox->setEnabled(false);
-  relationsDirectedCheckBox->setEnabled(false);
-  relationsUndirectedCheckBox->setCheckState(Qt::Checked);
-  directedRelationships = false;
-  warningSeps = new QLabel(tr("The separators as they are currenlty set will also be used in the saved files"));
-  //
-  
-  lowerLabel = new QLabel(tr("<h3>Save files</h3>")); // Just a title for another part of the dialog
+  topLabel = new QLabel(tr("<h3>File import</h3>")); // Just a title for part of the dialog
   openFile = new QPushButton(tr("Open File")); // Button to select filename
   sepSelector = new QComboBox(this); // Combobox to select delimiter for columns.
   sepSelector->addItem(tr("-Select a delimiter-"));
@@ -108,6 +62,52 @@ MainDialog::MainDialog(QWidget *parent) : QDialog(parent) {
   sepTwoSelector->addItem(tr("-Select a second delimiter-")); 
   sepTwoSelector->setEnabled(false); // This combobox is only activted if the sepTwoSwitcher is checked.
   importFile = new QPushButton(tr("Import")); // Button to start importing files.
+ 
+  /* 
+     The program allows the user to import files that have multiple values in a single cell, separated by columns.
+     However, it is not allowed to use the same separator/delimiter for both the columns, and the values within cells,
+     because that would make it impossible for the program to distinguish between single value and multi value columns.
+     The program is made so that the same delimiters cannot be used twice, and the label below informs the user of this.
+  */
+  noteSeps = new QLabel(tr("Note: You cannot use the same delimiter twice,\n because that makes the file unreadable to the program."));
+  middleLabel = new QLabel(tr("<h3>Configure Nodes and Edges</h3>")); // Label for the part where nodes and edges are configurated
+  nodesEdgesLabel = new QLabel(tr("<h4>Set source and target nodes")); // Just an info label
+  sourceSelector = new QComboBox(this); // Combobox that allows the user to select a source node
+  sourceSelector->addItem("-Select Source Node-"); // The other options for this are created dynamically, based on the input file
+  targetSelector = new QComboBox(this); // Combobox that allows the user to select a target node
+  targetSelector->addItem("-Select Target Node-"); // The other options for this are created dynamically, based on the input file
+  // The button below will open a dialog where the user can select properties to be assigned to nodes and edges. 
+  setPropertiesButton = new QPushButton(tr("Set Properties")); 
+  sourceSelector->setEnabled(false); // The selectors are disabled by default, and will be enabled once a file has been imported
+  targetSelector->setEnabled(false);
+  setPropertiesButton->setEnabled(false); // The same goes for the button to open the properties dialog.
+  // The user can use the checkbox below to indicate that sources should be excluded from the nodes list, which is sometimes useful.
+  excludeSourcesCheckBox = new QCheckBox("Exclude sources from nodes list\n(The associated properties will also be excluded)");
+  excludeSourcesCheckBox->setEnabled(false); // Also disabled by default.
+  excludeSources = false; // And we assume that source nodes are not excluded normally.
+  /*
+    We let the user indicate what the type of relationship in the edge list is, which can be either undirected or directed.
+    We use an exclusive group of two checkboxes for this (exclusive meaning that checking one automatically unchecks the other).
+    The checkboxes are disabled by default, and are activated when the user has selected appropriate source and target nodes.
+   */
+  relationsLabel = new QLabel(tr("<h4>Set relationship type</h4>"));
+  relationsGroup = new QButtonGroup(this);
+  relationsGroup->setExclusive(true);
+  relationsDirectedCheckBox = new QCheckBox(tr("Relationships are directed"));
+  relationsUndirectedCheckBox = new QCheckBox(tr("Relationships are undirected"));
+  relationsGroup->addButton(relationsDirectedCheckBox, 1);
+  relationsGroup->addButton(relationsUndirectedCheckBox, 2);
+  relationsUndirectedCheckBox->setEnabled(false);
+  relationsDirectedCheckBox->setEnabled(false);
+  relationsUndirectedCheckBox->setCheckState(Qt::Checked);
+  directedRelationships = false;
+  /*
+    The lower part of the main dialog is used to save the nodes and edges list as configured by the user, or to
+    quit the program. The program assumes that the same delimiters should be used as those that were used in the 
+    imported file. 
+   */
+  warningSeps = new QLabel(tr("The separators as they are currently set will also be used in the saved files"));
+  lowerLabel = new QLabel(tr("<h3>Save files</h3>")); // Just a title for another part of the dialog
   saveNodes = new QPushButton(tr("Save Nodes File")); // Save button for nodes.
   saveEdges = new QPushButton(tr("Save Edges File")); // Save button for edges.
   saveNodes->setEnabled(false); // The save buttons are disabled at first.
@@ -134,21 +134,22 @@ MainDialog::MainDialog(QWidget *parent) : QDialog(parent) {
   connect(importFile, SIGNAL(clicked()), this, SLOT(fireFileSend()));
   connect(this, SIGNAL(sendFileOne(const QString &, const QString &, const QString &)), inputTable, SLOT(readDataOne(const QString &, const QString &, const QString &)));
   connect(this, SIGNAL(sendFileTwo(const QString &, const QString &)), inputTable, SLOT(readDataTwo(const QString &, const QString &)));
-   
-  // The exit button signal to close the program.
-  connect(exitButton, SIGNAL(clicked()), qApp, SLOT(quit()));
-
-  // ADDING NEW SIGNALS
+  // This signal activates the interface for configuring nodes and edges, after a file is imported.
   connect(inputTable, SIGNAL(importFinished()), this, SLOT(enableVariables()));
+  // The next two signals indicate changes in the selected source or target node, and call the appropriate functions to handle that.
   connect(sourceSelector, SIGNAL(currentIndexChanged(const QString &)), this, SLOT(setSourceSelection(const QString &)));
   connect(targetSelector, SIGNAL(currentIndexChanged(const QString &)), this, SLOT(setTargetSelection(const QString &)));
+  // This signal makes it so that the properties button calls a function that opens the properties dialog.
   connect(setPropertiesButton, SIGNAL(clicked()), this, SLOT(openPropertiesDialog()));
+  // This signal indicates a change in the setting for excluding sources or not, and calls the appropriate function.
   connect(excludeSourcesCheckBox, SIGNAL(stateChanged(const int &)), this, SLOT(setExcludeSources(const int &)));
+  // This signal calls a function that handles a change in one of the checkboxes that indicate the type of edge relationships.
   connect(relationsGroup, SIGNAL(buttonClicked(const int &)), this, SLOT(setRelationshipType()));
-
   // The two buttons below call one of the save functions. Basically, they call one included in the appropriate functions of the CsvOutput header.
   connect(saveNodes, SIGNAL(clicked()), this, SLOT(saveNodesFile()));
   connect(saveEdges, SIGNAL(clicked()), this, SLOT(saveEdgesFile()));
+  // The exit button signal to close the program.
+  connect(exitButton, SIGNAL(clicked()), qApp, SLOT(quit()));
 
   // Below the layout is created, which consists out of several building blocks. All the buttons and other widgets are layed out here.
   QVBoxLayout *topLayout = new QVBoxLayout;
@@ -167,47 +168,45 @@ MainDialog::MainDialog(QWidget *parent) : QDialog(parent) {
   topLayout->addLayout(topLayoutTwo);
   topLayout->addLayout(topLayoutThree);
   topLayout->addLayout(topLayoutFour);
-
-  // Adding some new layout
-  QVBoxLayout *middleLayout = new QVBoxLayout;
-  QHBoxLayout *middleLayoutMain = new QHBoxLayout;
-  QVBoxLayout *middleLayoutBottom = new QVBoxLayout;
-  middleLayoutMain->addWidget(sourceSelector);
-  middleLayoutMain->addWidget(targetSelector);
-  middleLayoutMain->addWidget(setPropertiesButton);
-  middleLayoutBottom->addWidget(excludeSourcesCheckBox);
-  middleLayoutBottom->addWidget(relationsLabel);
-  middleLayoutBottom->addWidget(relationsUndirectedCheckBox);
-  middleLayoutBottom->addWidget(relationsDirectedCheckBox);
-  middleLayout->addWidget(middleLabel);
-  middleLayout->addWidget(nodesEdgesLabel);
-  middleLayout->addLayout(middleLayoutMain);
-  middleLayout->addLayout(middleLayoutBottom);
-  //
   
+  QVBoxLayout *upperMiddleLayout = new QVBoxLayout;
+  QHBoxLayout *upperMiddleLayoutMain = new QHBoxLayout;
+  QVBoxLayout *upperMiddleLayoutMinor = new QVBoxLayout;
+  upperMiddleLayoutMain->addWidget(sourceSelector);
+  upperMiddleLayoutMain->addWidget(targetSelector);
+  upperMiddleLayoutMain->addWidget(setPropertiesButton);
+  upperMiddleLayoutMinor->addWidget(excludeSourcesCheckBox);
+  upperMiddleLayoutMinor->addWidget(relationsLabel);
+  upperMiddleLayoutMinor->addWidget(relationsUndirectedCheckBox);
+  upperMiddleLayoutMinor->addWidget(relationsDirectedCheckBox);
+  upperMiddleLayout->addWidget(middleLabel);
+  upperMiddleLayout->addWidget(nodesEdgesLabel);
+  upperMiddleLayout->addLayout(upperMiddleLayoutMain);
+  upperMiddleLayout->addLayout(upperMiddleLayoutMinor);
+
   QVBoxLayout *lowerMiddleLayout = new QVBoxLayout;
   lowerMiddleLayout->addWidget(lowerLabel);
   lowerMiddleLayout->addWidget(saveNodes);
   lowerMiddleLayout->addWidget(saveEdges);
   lowerMiddleLayout->addWidget(warningSeps);
+
   QHBoxLayout *lowerLayout = new QHBoxLayout;
   lowerLayout->addWidget(exitButton);
+  
   QFrame *topLine = new QFrame();
   topLine->setFrameShape(QFrame::HLine);
   QFrame *middleLine = new QFrame();
   middleLine->setFrameShape(QFrame::HLine);
   QFrame *lowerLine = new QFrame();
   lowerLine->setFrameShape(QFrame::HLine);
-
+  
   QVBoxLayout *mainLayout = new QVBoxLayout; 
   topLayout->setContentsMargins(QMargins(15, 15, 15, 15));
   mainLayout->addLayout(topLayout);
   mainLayout->addWidget(topLine);
-  
-  middleLayout->setContentsMargins(QMargins(15, 15, 15, 15));
-  mainLayout->addLayout(middleLayout);
+  upperMiddleLayout->setContentsMargins(QMargins(15, 15, 15, 15));
+  mainLayout->addLayout(upperMiddleLayout);
   mainLayout->addWidget(middleLine);
-  
   lowerMiddleLayout->setContentsMargins(QMargins(15, 15, 15, 15));  
   mainLayout->addLayout(lowerMiddleLayout);
   mainLayout->addWidget(lowerLine);
@@ -234,6 +233,8 @@ void MainDialog::getFile() {
    for both are the same. Therefore, the options for the multi-value delimiters always
    exclude the column delimiter that is selected. The options for the multi-value 
    delimiter are reset each time the user sets another column delimiter.
+
+   We also reset other functions and interface options for transparency reasons.
 */
 void MainDialog::setSepOne(const QString &selection) {
   sepOne = selection;
@@ -287,14 +288,37 @@ void MainDialog::switchSepTwo(const int &state) {
     sepTwoSelector->setEnabled(true);
     saveNodes->setEnabled(false);
     saveEdges->setEnabled(false);
+    sourceSelector->setEnabled(false);
+    targetSelector->setEnabled(false);
+    setPropertiesButton->setEnabled(false);
+    excludeSourcesCheckBox->setEnabled(false);
+    excludeSourcesCheckBox->setCheckState(Qt::Unchecked);
+    relationsDirectedCheckBox->setEnabled(false);
+    relationsUndirectedCheckBox->setEnabled(false);
+    relationsDirectedCheckBox->setCheckState(Qt::Unchecked);
+    relationsUndirectedCheckBox->setCheckState(Qt::Checked);
+    excludeSources = false;
+    directedRelationships = false;
   } else {
     sepTwoSelector->setEnabled(false);
     saveNodes->setEnabled(false);
     saveEdges->setEnabled(false);
+    sourceSelector->setEnabled(false);
+    targetSelector->setEnabled(false);
+    setPropertiesButton->setEnabled(false);
+    excludeSourcesCheckBox->setEnabled(false);
+    excludeSourcesCheckBox->setCheckState(Qt::Unchecked);
+    relationsDirectedCheckBox->setEnabled(false);
+    relationsUndirectedCheckBox->setEnabled(false);
+    relationsDirectedCheckBox->setCheckState(Qt::Unchecked);
+    relationsUndirectedCheckBox->setCheckState(Qt::Checked);
+    excludeSources = false;
+    directedRelationships = false;
   }
 }
 
 // This function sets the multi-value delimiter to what was chosen by the user.
+// We also reset other features of the interface for transparency reasons.
 void MainDialog::setSepTwo(const QString &selection) {
   sepTwo = selection;
   saveNodes->setEnabled(false);
@@ -326,13 +350,16 @@ void MainDialog::fireFileSend()
   }
 }
 
-// This function enables the variable buttons and also sets the contents of the two comboboxes first.
+// This function enables the part of the interface where the nodes and edges configuration is set.
+// It also retrieves the possible options for source and target nodes from the inputTable. 
 void MainDialog::enableVariables() {
   sourceSelector->clear();
   targetSelector->clear();
   sourceSelector->addItem(tr("-Select Source Node-"));
   targetSelector->addItem(tr("-Select Target Node-"));
-  std::vector<std::string> optionLabels = inputTable->GetHeader();
+  // inputTable creates a separate vector for the header of the input file. We can use this vector
+  // to identify the names of the variables that are candidates for the source node, the target node, and properties.
+  std::vector<std::string> optionLabels = inputTable->GetHeader(); 
   std::vector<std::string>::iterator it;
   for(it = optionLabels.begin(); it != optionLabels.end(); it++) {
     QString currentLabel = QString::fromUtf8(it->c_str());
@@ -343,6 +370,8 @@ void MainDialog::enableVariables() {
   targetSelector->setEnabled(true);
 }
 
+// This function processes the selection that the user makes for a source node.
+// It also checks for some possible illegal combinations of source and target, and (de)activates parts of the interface accordingly.
 void MainDialog::setSourceSelection(const QString &selection) {
   sourceSelection = selection;
   if (sourceSelection != tr("-Select Source Node-") && targetSelection != tr("-Select Target Node-") && sourceSelection != targetSelection) {
@@ -359,9 +388,13 @@ void MainDialog::setSourceSelection(const QString &selection) {
     saveEdges->setEnabled(false);
 
   }
+  // If properties were already assigned to a previous source node, we should make sure that they are cleared for the new source node.
+  // See below and the properties dialog cpp file to understand how properties are assigned.
   sourceProperties.clear();
 }
 
+// This function processes the selection that the user makes for a target node.
+// It also checks for some possible illegal combinations of source and target, and (de)activates parts of the interface accordingly.
 void MainDialog::setTargetSelection(const QString &selection) {
   targetSelection = selection;
   if (sourceSelection != tr("-Select Source Node-") && targetSelection != tr("-Select Target Node-") && sourceSelection != targetSelection) {
@@ -369,6 +402,7 @@ void MainDialog::setTargetSelection(const QString &selection) {
     excludeSourcesCheckBox->setEnabled(true);
     relationsDirectedCheckBox->setEnabled(true);
     relationsUndirectedCheckBox->setEnabled(true);
+    // If an appropriate selection of source and target nodes is made, then it becomes possible to save the nodes and edges lists.
     saveNodes->setEnabled(true);
     saveEdges->setEnabled(true);
   } else {
@@ -379,9 +413,17 @@ void MainDialog::setTargetSelection(const QString &selection) {
     saveNodes->setEnabled(false);
     saveEdges->setEnabled(false);
   }
+  // If properties were already assigned to a previous target node, we should make sure that they are cleared for the new target node.
+  // See below and the properties dialog cpp file to understand how properties are assigned.
   targetProperties.clear();
 }
 
+/*
+  This function first creates a new instance of the properties dialog, sets it up, and then shows it to the user.
+  The dialog is deleted on closure, so a new one is created everytime the user clicks the button to open the dialog.
+  The dialog will allow the user to assign properties to the source node and the target node, and then the properties dialog
+  will tell the main dialog what the properties are, so that this information is retained even after the properties dialog is deleted.
+*/
 void MainDialog::openPropertiesDialog() {
   std::vector<std::string> tempHeader = inputTable->GetHeader();
   QVector<QString> tempQHeader;
@@ -396,12 +438,8 @@ void MainDialog::openPropertiesDialog() {
   propertiesDialog->exec();
 }
 
-// This function enables the save buttons.
-void MainDialog::enableSave() {
-  saveNodes->setEnabled(true);
-  saveEdges->setEnabled(true);
-}
-
+// As described above, the properties dialog tells the main dialog which properties the user has assigned to the source and target nodes.
+// This function is called to process the selection of properties.
 void MainDialog::setProperties(const QVector<QString> &sourceProps, const QVector<QString> &targetProps) {
  QVectorIterator<QString> sIt(sourceProps);
   while (sIt.hasNext()) {
@@ -417,6 +455,7 @@ void MainDialog::setProperties(const QVector<QString> &sourceProps, const QVecto
   }
 }
 
+// This function sets the type of edge relationships, based on the user's selection.
 void MainDialog::setRelationshipType() {
   if (relationsGroup->checkedId() == 1) {
     directedRelationships = true;
@@ -436,6 +475,7 @@ void MainDialog::saveEdgesFile() {
   CsvOutputEdges(inputTable, sourceSelection, targetSelection, directedRelationships, saveFile, stdSepOne, stdSepTwo);
 }
 
+// This function processes the choice of the user to exclude the source node (or not) in the nodes list.
 void MainDialog::setExcludeSources(const int &state) {
   if(state == Qt::Checked) {
     excludeSources = true;
@@ -458,8 +498,6 @@ void MainDialog::saveNodesFile() {
 // This function make sure that the memory used by the instantiated InputTable class is freed up again. 
 void MainDialog::closing() {
     delete inputTable;
-    sourceProperties.clear();
-    targetProperties.clear();
 }
 
 // This function will reset some options to prevent unexpected results if the user
