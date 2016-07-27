@@ -132,8 +132,7 @@ MainDialog::MainDialog(QWidget *parent) : QDialog(parent) {
      call from the instantiated InputTable Classe. Once this is determined, one of the next two signals is fired.
      These pass the  necessary information to the instantiated InputTable class and tell it to import the file.  */
   connect(importFile, SIGNAL(clicked()), this, SLOT(fireFileSend()));
-  connect(this, SIGNAL(sendFileOne(const QString &, const QString &, const QString &)), inputTable, SLOT(readDataOne(const QString &, const QString &, const QString &)));
-  connect(this, SIGNAL(sendFileTwo(const QString &, const QString &)), inputTable, SLOT(readDataTwo(const QString &, const QString &)));
+  connect(this, SIGNAL(sendFile(const QString &, const QString &)), inputTable, SLOT(readData(const QString &, const QString &)));
   // This signal activates the interface for configuring nodes and edges, after a file is imported.
   connect(inputTable, SIGNAL(importFinished()), this, SLOT(enableVariables()));
   // The next two signals indicate changes in the selected source or target node, and call the appropriate functions to handle that.
@@ -264,6 +263,7 @@ void MainDialog::setSepOne(const QString &selection) {
     sepTwoSelector->addItem(";");
     sepTwoSelector->addItem(":");
   }
+  sepTwoSelector->setCurrentIndex(sepTwoSelector->findText(tr("-Select a second delimiter-")));
   saveNodes->setEnabled(false);
   saveEdges->setEnabled(false);
   sourceSelector->setEnabled(false);
@@ -300,6 +300,7 @@ void MainDialog::switchSepTwo(const int &state) {
     excludeSources = false;
     directedRelationships = false;
   } else {
+    sepTwoSelector->setCurrentIndex(sepTwoSelector->findText(tr("-Select a second delimiter-")));
     sepTwoSelector->setEnabled(false);
     saveNodes->setEnabled(false);
     saveEdges->setEnabled(false);
@@ -343,11 +344,7 @@ void MainDialog::setSepTwo(const QString &selection) {
 */
 void MainDialog::fireFileSend()
 {
-  if (sepTwoSwitcher->checkState() == Qt::Checked) {
-    emit sendFileOne(fileName, sepOne, sepTwo);
-  } else {
-    emit sendFileTwo(fileName, sepOne);
-  }
+  emit sendFile(fileName, sepOne);
 }
 
 // This function enables the part of the interface where the nodes and edges configuration is set.
@@ -506,6 +503,7 @@ void MainDialog::resetFileImport() {
   saveNodes->setEnabled(false);
   saveEdges->setEnabled(false);
   sepTwoSelector->setEnabled(false);
+  sepTwoSelector->setCurrentIndex(sepTwoSelector->findText(tr("-Select a second delimiter-")));
   sepTwoSwitcher->setCheckState(Qt::Unchecked);
   sourceSelector->setEnabled(false);
   targetSelector->setEnabled(false);

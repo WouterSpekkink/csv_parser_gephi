@@ -56,8 +56,7 @@ public:
   MainDialog(QWidget *parent=0);
 
 signals:
-  void sendFileOne(const QString &file, const QString &sepOne, const QString &sepTwo);
-  void sendFileTwo(const QString &file, const QString &sepOne);
+  void sendFile(const QString &file, const QString &sepOne);
   void sendDetails(const QVector<QString> &vector, const QString &source, const QString &target);;
   
 private slots:

@@ -42,9 +42,7 @@ class InputTable : public QObject {
 
 public:
   InputTable(QWidget *parent = 0); 
-  void ReadFileOne(const std::string &file, const char &delimOne, const char &delimTwo);
-  void ReadFileTwo(const std::string &file, const char &delimOne);
-  int GetEventNumber();
+  void ReadFile(const std::string &file, const char &sepOneChar);
   const std::vector<std::string> GetHeader();
   const std::vector<std::vector <std::string> > GetRowData();
   
@@ -54,8 +52,7 @@ signals:
   void importFinished();
 		       
 private slots:
-  void readDataOne(const QString &fileName, const QString &sepOne, const QString &sepTwo);
-  void readDataTwo(const QString &fileName, const QString &sepOne);
+  void readData(const QString &fileName, const QString &sepOne);
   
 private:
   // We assume that the first column of the file that the user submits has the events/incidents.
@@ -63,6 +60,5 @@ private:
   // The rest of the contents of the file are treated as data.
   std::vector<std::string> header; 
   std::vector<std::vector <std::string> > rowData;
-  int nEvents;
 };
 #endif

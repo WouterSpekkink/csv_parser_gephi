@@ -52,9 +52,12 @@ bool CsvOutputEdges(InputTable *table, const QString sourceSelection, const QStr
   if (directedRelationships) {
     relationshipType = "Directed";
   }
-  std::istringstream convertSep(sepTwo.c_str());
+  std::istringstream convertSepOne(sepOne.c_str());
+  char sepOneChar;
+  convertSepOne >> sepOneChar;
+  std::istringstream convertSepTwo(sepTwo.c_str());
   char sepTwoChar;
-  convertSep >> sepTwoChar;
+  convertSepTwo >> sepTwoChar;
     
   // We need to know in which part of the data vector the source and target node reside.
   // We create and set an index to achieve that.
@@ -125,9 +128,12 @@ bool CsvOutputNodes(InputTable *table, QString sourceSelection, QString targetSe
   InputTable *outputTable = table;
   std::vector <std::string> headers = outputTable->GetHeader();
   std::vector <std::vector <std::string> > data = outputTable->GetRowData();
-  std::istringstream convertSep(sepTwo.c_str());
+    std::istringstream convertSepOne(sepOne.c_str());
+  char sepOneChar;
+  convertSepOne >> sepOneChar;
+  std::istringstream convertSepTwo(sepTwo.c_str());
   char sepTwoChar;
-  convertSep >> sepTwoChar;
+  convertSepTwo >> sepTwoChar;
   std::string sourceString = sourceSelection.toUtf8().constData();
   std::string targetString = targetSelection.toUtf8().constData();
   /* 
@@ -252,7 +258,8 @@ bool CsvOutputNodes(InputTable *table, QString sourceSelection, QString targetSe
     std::vector <int>::iterator sourcePropsIt;
     for (sourcePropsIt = sourcePropertiesIndexes.begin(); sourcePropsIt != sourcePropertiesIndexes.end(); sourcePropsIt++) {
       int currentIndex = *sourcePropsIt;
-      sourcePropsString = sourcePropsString + sepOne + currentData[currentIndex];
+      std::string tempData = currentData[currentIndex];
+      sourcePropsString = sourcePropsString + sepOne + tempData;
       fakeSourceString = fakeSourceString + sepOne + "";
     }
     std::string targetPropsString = "";
@@ -260,22 +267,24 @@ bool CsvOutputNodes(InputTable *table, QString sourceSelection, QString targetSe
     std::vector <int>::iterator targetPropsIt;
     for (targetPropsIt = targetPropertiesIndexes.begin(); targetPropsIt != targetPropertiesIndexes.end(); targetPropsIt++) {
       int currentIndex = *targetPropsIt;
-      targetPropsString = targetPropsString + sepOne + currentData[currentIndex];
+      std::string tempData = currentData[currentIndex];
+      targetPropsString = targetPropsString + sepOne + tempData;
       fakeTargetString = fakeTargetString + sepOne + "";
     }
     std::string sharedPropsString = "";
     std::vector <int>::iterator sharedPropsIt;
     for (sharedPropsIt = sharedPropertiesIndexes.begin(); sharedPropsIt != sharedPropertiesIndexes.end(); sharedPropsIt++) {
       int currentIndex = *sharedPropsIt;
-      sharedPropsString = sharedPropsString + sepOne + currentData[currentIndex];
+      std::string tempData = currentData[currentIndex];
+      sharedPropsString = sharedPropsString + sepOne + tempData;
     }
     // And here the entries with multiple values are separated out. We don't do that for properties.
     std::istringstream sourceStringStream(currentSource);
     while (sourceStringStream) {
       std::string s;
       if (!getline(sourceStringStream, s, sepTwoChar)) break;
-	s = s + sharedPropsString + sourcePropsString + fakeTargetString;
-	sepSources.push_back(s);
+      s = s + sharedPropsString + sourcePropsString + fakeTargetString;
+      sepSources.push_back(s);
     }
     std::istringstream targetStringStream(currentTarget);
     while (targetStringStream) {
