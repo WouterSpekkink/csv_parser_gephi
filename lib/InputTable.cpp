@@ -112,6 +112,10 @@ void InputTable::ReadFile(const std::string &inputFile, const char &sepOneChar)
 	inTextField = false;
       }
       if (inTextField == false && buffer[i] == sepOneChar) {
+	while (buffer[previousPos] == ' ') {
+	  previousPos++;
+	  stringLength--;
+	}
 	std::string tempString = buffer.substr(previousPos, stringLength);
 	currentLineProcessed.push_back(tempString);
 	previousPos = i + 1;

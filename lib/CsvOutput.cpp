@@ -87,9 +87,11 @@ bool CsvOutputEdges(InputTable *table, const QString sourceSelection, const QStr
     fileOut << "Source" << sepOne << "Target" << sepOne << "Weight" << sepOne << "Type";
   }
   fileOut << '\n';
-  
 
-  // Then we iterate through the data vector, find the appropriate entries, and write them to our file.
+  // We make a vector to store our lines for the output file.
+  std::vector <std::string> fileVector;
+  
+  // Then we iterate through the data vector, find the appropriate entries, and write them to our file vector.
   std::vector <std::vector <std::string> >::iterator itData;
   for (itData = data.begin(); itData != data.end(); itData++) {
     std::vector <std::string> currentData = *itData;
@@ -103,12 +105,18 @@ bool CsvOutputEdges(InputTable *table, const QString sourceSelection, const QStr
     while (sourceStream) {
       std::string s;
       if (!getline(sourceStream, s, sepTwoChar)) break;
+      while (s[0] == ' ') {
+	s = s.substr(1, s.length());
+      }
       sepSources.push_back(s);
     }
     std::istringstream targetStream(currentTarget);
     while (targetStream) {
       std::string s;
       if (!getline(targetStream, s, sepTwoChar)) break;
+      while (s[0] == ' ') {
+	s = s.substr(1, s.length());
+      }
       sepTargets.push_back(s);
     }
     std::vector <std::string>::iterator itSepSources;
@@ -120,14 +128,23 @@ bool CsvOutputEdges(InputTable *table, const QString sourceSelection, const QStr
       for (itSepTargets = sepTargets.begin(); itSepTargets != sepTargets.end(); itSepTargets++) {
 	std::string currentSepTarget = *itSepTargets;
 	if (relationshipLabel.size() > 0) {
-	  fileOut << currentSepSource << sepOne << currentSepTarget << sepOne << 1 << sepOne << relationshipType << sepOne << relationshipLabel;
+	  fileVector.push_back(currentSepSource + sepOne + currentSepTarget + sepOne + "1" + sepOne + relationshipType + sepOne +  relationshipLabel + '\n');
 	} else {
-	  fileOut << currentSepSource << sepOne << currentSepTarget << sepOne << 1 << sepOne << relationshipType;
+	  fileVector.push_back(currentSepSource + sepOne + currentSepTarget + sepOne + "1" + sepOne + relationshipType + '\n');
 	}
-	fileOut << '\n';
       }
     }
   }
+  // We remove all doubles from the edge list here.
+  std::sort(fileVector.begin(), fileVector.end());
+  fileVector.erase(std::unique(fileVector.begin(), fileVector.end()), fileVector.end());
+
+  // Then we iterate through our file vector and write everything to our file.
+  std::vector <std::string>::iterator lineReader;
+  for (lineReader = fileVector.begin(); lineReader != fileVector.end(); lineReader++) {
+    fileOut << *lineReader;
+  }
+  
   // And after that we can close the file and end the function.
   fileOut.close();
   return true;
@@ -296,12 +313,18 @@ bool CsvOutputNodes(InputTable *table, QString sourceSelection, QString targetSe
     while (sourceStringStream) {
       std::string s;
       if (!getline(sourceStringStream, s, sepTwoChar)) break;
+      while (s[0] == ' ') {
+	s = s.substr(1, s.length());
+      }
       s = s + sharedPropsString + sourcePropsString + fakeTargetString;
       sepSources.push_back(s);
     }
     std::istringstream targetStringStream(currentTarget);
     while (targetStringStream) {
       std::string s;
+      while (s[0] == ' ') {
+	s = s.substr(1, s.length());
+      }
       if (!getline(targetStringStream, s, sepTwoChar)) break;
       s = s + sharedPropsString + fakeSourceString + targetPropsString;
       sepTargets.push_back(s);
