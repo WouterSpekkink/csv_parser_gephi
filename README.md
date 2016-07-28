@@ -10,9 +10,6 @@ The program requires the user to select an input file (csv), as well as the symb
 
 The purpose of this program is highly specific, but there may be things in the code that are useful for others. 
 
-# To do
-The program does not handle exceptions yet, which is something I plan to add soon.
-
 # Downloading the programming
 The program can be downloaded for free from [my website](http://www.wouterspekkink.org/?page_id=392). There is a version for Linux as well as for Windows. I do not plan to build a version of Mac OSX, but feel free to try yourself (see section on building the program yourself). There might be unexpected behaviour due to the different standard that Mac OSX uses for csv-files, although you should als be able to save csv-files in the format that is more commonly used.
 
