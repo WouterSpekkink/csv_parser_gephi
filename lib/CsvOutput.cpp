@@ -127,10 +127,17 @@ bool CsvOutputEdges(InputTable *table, const QString sourceSelection, const QStr
       std::string currentSepSource = *itSepSources;
       for (itSepTargets = sepTargets.begin(); itSepTargets != sepTargets.end(); itSepTargets++) {
 	std::string currentSepTarget = *itSepTargets;
-	if (relationshipLabel.size() > 0) {
-	  fileVector.push_back(currentSepSource + sepOne + currentSepTarget + sepOne + "1" + sepOne + relationshipType + sepOne +  relationshipLabel + '\n');
-	} else {
-	  fileVector.push_back(currentSepSource + sepOne + currentSepTarget + sepOne + "1" + sepOne + relationshipType + '\n');
+	if (currentSepSource != currentSepTarget) {
+	  std::vector <std::string> tempVector;
+	  tempVector.push_back(currentSepSource);
+	  tempVector.push_back(currentSepTarget);
+	  std::sort(tempVector.begin(), tempVector.end());
+	  std::string sourceTarget = tempVector[0] + sepOne + tempVector[1];
+	  if (relationshipLabel.size() > 0) {
+	    fileVector.push_back(sourceTarget + sepOne + "1" + sepOne + relationshipType + sepOne +  relationshipLabel + '\n');
+	  } else {
+	    fileVector.push_back(sourceTarget + sepOne + "1" + sepOne + relationshipType + '\n');
+	  }
 	}
       }
     }
@@ -322,10 +329,10 @@ bool CsvOutputNodes(InputTable *table, QString sourceSelection, QString targetSe
     std::istringstream targetStringStream(currentTarget);
     while (targetStringStream) {
       std::string s;
+      if (!getline(targetStringStream, s, sepTwoChar)) break;
       while (s[0] == ' ') {
 	s = s.substr(1, s.length());
       }
-      if (!getline(targetStringStream, s, sepTwoChar)) break;
       s = s + sharedPropsString + fakeSourceString + targetPropsString;
       sepTargets.push_back(s);
     }
@@ -370,23 +377,25 @@ bool CsvOutputNodes(InputTable *table, QString sourceSelection, QString targetSe
     }
   }
 
-  // And here we basically do the same for the target nodes.
-  if (!excludeTargets) {
-    std::vector <std::string> firstTargets;
-    std::vector <std::string>::iterator stI;
-    for (stI = sepTargets.begin(); stI != sepTargets.end(); stI++) {
-      std::string currentTarget = *stI;
-      std::size_t firstStop = currentTarget.find_first_of(sepOne);
-      currentTarget = currentTarget.substr(0, firstStop);
-      firstTargets.push_back(currentTarget);
-    }
-    std::vector <std::string>::iterator itSepTarget;
-    std::vector <std::string>::iterator itSepTargetFirst = firstTargets.begin();
-    for (itSepTarget = sepTargets.begin(); itSepTarget != sepTargets.end(); itSepTarget++, itSepTargetFirst++) {
-      std::string sepTarget = *itSepTarget;
-      std::string first = *itSepTargetFirst;
-      std::string currentLine = first + sepOne + targetString + sepOne + sepTarget + '\n';
-      fileVector.push_back(currentLine);
+  if (sourceSelection != targetSelection) {
+    // And here we basically do the same for the target nodes.
+    if (!excludeTargets) {
+      std::vector <std::string> firstTargets;
+      std::vector <std::string>::iterator stI;
+      for (stI = sepTargets.begin(); stI != sepTargets.end(); stI++) {
+	std::string currentTarget = *stI;
+	std::size_t firstStop = currentTarget.find_first_of(sepOne);
+	currentTarget = currentTarget.substr(0, firstStop);
+	firstTargets.push_back(currentTarget);
+      }
+      std::vector <std::string>::iterator itSepTarget;
+      std::vector <std::string>::iterator itSepTargetFirst = firstTargets.begin();
+      for (itSepTarget = sepTargets.begin(); itSepTarget != sepTargets.end(); itSepTarget++, itSepTargetFirst++) {
+	std::string sepTarget = *itSepTarget;
+	std::string first = *itSepTargetFirst;
+	std::string currentLine = first + sepOne + targetString + sepOne + sepTarget + '\n';
+	fileVector.push_back(currentLine);
+      }
     }
   }
   

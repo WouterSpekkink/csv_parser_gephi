@@ -410,7 +410,7 @@ void MainDialog::enableVariables() {
 // It also checks for some possible illegal combinations of source and target, and (de)activates parts of the interface accordingly.
 void MainDialog::setSourceSelection(const QString &selection) {
   sourceSelection = selection;
-  if (sourceSelection != tr("-Select Source Node-") && targetSelection != tr("-Select Target Node-") && sourceSelection != targetSelection) {
+  if (sourceSelection != tr("-Select Source Node-") && targetSelection != tr("-Select Target Node-")) {
     setPropertiesButton->setEnabled(true);
     relationsDirectedCheckBox->setEnabled(true);
     relationsUndirectedCheckBox->setEnabled(true);
@@ -425,7 +425,17 @@ void MainDialog::setSourceSelection(const QString &selection) {
     relationsTypeText->setText("");
     saveNodes->setEnabled(false);
     saveEdges->setEnabled(false);
-
+  }
+  if (sourceSelection == targetSelection) {
+    relationsDirectedCheckBox->setEnabled(false);
+    relationsUndirectedCheckBox->setEnabled(false);
+    relationsDirectedCheckBox->setCheckState(Qt::Unchecked);
+    relationsUndirectedCheckBox->setCheckState(Qt::Checked);
+    directedRelationships = false;
+    excludeSourcesCheckBox->setEnabled(false);
+    excludeTargetsCheckBox->setEnabled(false);
+    excludeSources = false;
+    excludeTargets = false;
   }
   // If properties were already assigned to a previous source node, we should make sure that they are cleared for the new source node.
   // See below and the properties dialog cpp file to understand how properties are assigned.
@@ -436,7 +446,7 @@ void MainDialog::setSourceSelection(const QString &selection) {
 // It also checks for some possible illegal combinations of source and target, and (de)activates parts of the interface accordingly.
 void MainDialog::setTargetSelection(const QString &selection) {
   targetSelection = selection;
-  if (sourceSelection != tr("-Select Source Node-") && targetSelection != tr("-Select Target Node-") && sourceSelection != targetSelection) {
+  if (sourceSelection != tr("-Select Source Node-") && targetSelection != tr("-Select Target Node-")) {
     setPropertiesButton->setEnabled(true);
     excludeSourcesCheckBox->setEnabled(true);
     excludeTargetsCheckBox->setEnabled(true);
@@ -456,6 +466,17 @@ void MainDialog::setTargetSelection(const QString &selection) {
     relationsTypeText->setText("");
     saveNodes->setEnabled(false);
     saveEdges->setEnabled(false);
+  }
+  if (sourceSelection == targetSelection) {
+    relationsDirectedCheckBox->setEnabled(false);
+    relationsUndirectedCheckBox->setEnabled(false);
+    relationsDirectedCheckBox->setCheckState(Qt::Unchecked);
+    relationsUndirectedCheckBox->setCheckState(Qt::Checked);
+    directedRelationships = false;
+    excludeSourcesCheckBox->setEnabled(false);
+    excludeTargetsCheckBox->setEnabled(false);
+    excludeSources = false;
+    excludeTargets = false;
   }
   // If properties were already assigned to a previous target node, we should make sure that they are cleared for the new target node.
   // See below and the properties dialog cpp file to understand how properties are assigned.

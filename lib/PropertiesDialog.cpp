@@ -61,6 +61,9 @@ PropertiesDialog::PropertiesDialog(QWidget *parent, const QVector<QString> Qhead
     }
     if (tempBoxTwo->text() != targetInput && tempBoxTwo->text() != sourceInput) {
       targetVector.push_back(tempBoxTwo);
+      if (sourceInput == targetInput) {
+	tempBoxTwo->setEnabled(false);
+      }
     } else {
       delete tempBoxTwo;
     }
@@ -72,10 +75,10 @@ PropertiesDialog::PropertiesDialog(QWidget *parent, const QVector<QString> Qhead
   connect(cancelButton, SIGNAL(clicked()), this, SLOT(cancel())); // In case the user decides not to set properties.
   
   // Then we create our layout. 
-  QVBoxLayout *mainLayout = new QVBoxLayout;
-  QHBoxLayout *mainBodyLayout = new QHBoxLayout;
-  QVBoxLayout *mainBodyLeft = new QVBoxLayout;
-  QVBoxLayout *mainBodyRight = new QVBoxLayout;
+  QPointer<QVBoxLayout> mainLayout = new QVBoxLayout;
+  QPointer<QHBoxLayout> mainBodyLayout = new QHBoxLayout;
+  QPointer<QVBoxLayout> mainBodyLeft = new QVBoxLayout;
+  QPointer<QVBoxLayout> mainBodyRight = new QVBoxLayout;
 
   mainBodyLeft->addWidget(sourceLabel);
   QVectorIterator<QPointer<QCheckBox>> sI(sourceVector);
@@ -92,7 +95,7 @@ PropertiesDialog::PropertiesDialog(QWidget *parent, const QVector<QString> Qhead
   mainBodyLayout->addLayout(mainBodyLeft);
   mainBodyLayout->addLayout(mainBodyRight);
   mainLayout->addLayout(mainBodyLayout);
-  QHBoxLayout *lowerLayout = new QHBoxLayout;
+  QPointer<QHBoxLayout> lowerLayout = new QHBoxLayout;
   lowerLayout->addWidget(saveCloseButton);
   lowerLayout->addWidget(cancelButton);
   mainLayout->addLayout(lowerLayout);
@@ -123,7 +126,7 @@ void PropertiesDialog::saveAndClose() {
   QVectorIterator<QPointer<QCheckBox>> spI(sourceVector);
   spI.toFront();
   while (spI.hasNext()) {
-    QCheckBox *tempBox = spI.next();
+    QPointer<QCheckBox> tempBox = spI.next();
     if (tempBox->checkState() == Qt::Checked) {
       sourceProperties.push_back(tempBox->text());
     }
@@ -131,7 +134,7 @@ void PropertiesDialog::saveAndClose() {
   QVectorIterator<QPointer<QCheckBox>> tpI(targetVector);
   tpI.toFront();
   while (tpI.hasNext()) {
-    QCheckBox *tempBox = tpI.next();
+    QPointer<QCheckBox> tempBox = tpI.next();
     if (tempBox->checkState() == Qt::Checked) {
       targetProperties.push_back(tempBox->text());
      }
