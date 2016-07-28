@@ -38,6 +38,8 @@
 #include "../include/CsvOutput.h"
 #include <fstream>
 #include <QFileDialog>
+#include <QPointer>
+#include <QMessageBox>
 #include <sstream>
 
 // This function writes an edges file to the disk.
@@ -141,6 +143,12 @@ bool CsvOutputEdges(InputTable *table, const QString sourceSelection, const QStr
 	}
       }
     }
+  }
+  if (fileVector.empty()) {
+    QPointer<QMessageBox> errorBox =  new QMessageBox;
+    errorBox->setText("<b>WARNING</b>");
+    errorBox->setInformativeText("The Edge list is empty. Check your settings.");
+    errorBox->exec();
   }
   // We remove all doubles from the edge list here.
   std::sort(fileVector.begin(), fileVector.end());
