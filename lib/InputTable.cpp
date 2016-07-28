@@ -35,6 +35,9 @@
 #include <fstream>
 #include <sstream>
 #include <QMessageBox>
+#include <QPointer>
+#include <QSpacerItem>
+#include <QGridLayout>
 #include "../include/InputTable.h"
 
 // Constructor for this class.
@@ -90,13 +93,12 @@ void InputTable::ReadFile(const std::string &inputFile, const char &sepOneChar)
       }
     }
     if (quoteFound == true) {
-      QMessageBox errorBox;
-      errorBox.setText(tr("ERROR: Import cancelled"));
-      errorBox.setInformativeText("Unmatched quotes (\") were found in one of the lines of the file.");
-      errorBox.exec();
+      QPointer<QMessageBox> errorBox = new QMessageBox;
+      errorBox->setText(tr("<b>ERROR: Import cancelled</b>"));
+      errorBox->setInformativeText("Unmatched quotes (\") were found in one of the lines of the file.");
+      errorBox->exec();
       return;
     }
-        
     // This boolean will indicate whether or not we find ourselves in a text field. These may hold
     // delimiter symbols that should be ignored. The code below is customized to do just that.
     bool inTextField = false;
@@ -121,6 +123,7 @@ void InputTable::ReadFile(const std::string &inputFile, const char &sepOneChar)
     // And then we push this line of data in the larger data vector.
     dataVector.push_back(currentLineProcessed);
   }
+
   // This will disect the data into the header row, the event column, and the data rows. 
   std::vector<std::vector <std::string> >::iterator it;
   for(it = dataVector.begin(); it != dataVector.end(); it++) {
@@ -134,6 +137,13 @@ void InputTable::ReadFile(const std::string &inputFile, const char &sepOneChar)
       // Then we handle the other 'rows' in the data vector.
       rowData.push_back(*it);
     }
+  }
+  if (header.empty()) {
+    QPointer<QMessageBox> errorBox =  new QMessageBox;
+    errorBox->setText(tr("<b>ERROR: Import cancelled</b>"));
+    errorBox->setInformativeText("Something strange happened during the import. Did you set the delimiters correctly?");
+    errorBox->exec();
+    return;
   }
   // This signal is sent to the main dialog to let it know we have finished importing the file.
   emit importFinished();

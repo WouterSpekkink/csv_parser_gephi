@@ -34,7 +34,7 @@
 #define CSVOUTPUT_H
 #include "../include/InputTable.h"
 
-bool CsvOutputEdges(InputTable *table, const QString sourceSelection, const QString targetSelection, const bool directedRelationships, const std::string filename, const std::string sepOne, const std::string sepTwo);
-bool CsvOutputNodes(InputTable *table, QString sourceSelection, QString targetSelection, std::vector <std::string> sourceProperties, std::vector <std::string> targetProperties, bool excludeSources, std::string filename, std::string sepOne, std::string sepTwo);
+bool CsvOutputEdges(InputTable *table, const QString sourceSelection, const QString targetSelection, const bool directedRelationships, const QString relationsType, const std::string filename, const std::string sepOne, const std::string sepTwo);
+bool CsvOutputNodes(InputTable *table, QString sourceSelection, QString targetSelection, std::vector <std::string> sourceProperties, std::vector <std::string> targetProperties, bool excludeSources, bool excludeTargets, std::string filename, std::string sepOne, std::string sepTwo);
 
 #endif

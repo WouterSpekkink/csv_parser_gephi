@@ -71,8 +71,10 @@ private slots:
   void setTargetSelection(const QString &selection);
   void setProperties(const QVector<QString> &sourceProps, const QVector<QString> &targetProps);
   void setRelationshipType();
+  void setRelationshipLabel(const QString &label);
   void saveEdgesFile();
   void setExcludeSources(const int &state);
+  void setExcludeTargets(const int &state);
   void saveNodesFile();
   void closing();
   void resetFileImport();
@@ -88,11 +90,14 @@ private:
   QPointer<QPushButton> setPropertiesButton; 
   QPointer<QDialog> propertiesDialog;
   QPointer<QCheckBox> excludeSourcesCheckBox;
+  QPointer<QCheckBox> excludeTargetsCheckBox;
   QPointer<QLabel> relationsLabel;
   QPointer<QButtonGroup> relationsGroup;
   QPointer<QCheckBox> relationsDirectedCheckBox;
   QPointer<QCheckBox> relationsUndirectedCheckBox;
   QPointer<QLabel> warningSeps;
+  QPointer<QLabel> relationsTypeLabel;
+  QPointer<QLineEdit> relationsTypeText;
   QPointer<QPushButton> openFile;
   QPointer<QComboBox> sepSelector;
   QPointer<QComboBox> sepTwoSelector;
@@ -104,12 +109,14 @@ private:
   QPointer<QPushButton> saveEdges;
 
   bool excludeSources;
+  bool excludeTargets;
   bool directedRelationships;
   QString fileName;
   QString sepOne;
   QString sepTwo;
   QString sourceSelection;
   QString targetSelection;
+  QString relationsType;
   std::vector <std::string> sourceProperties;
   std::vector <std::string> targetProperties;
 
