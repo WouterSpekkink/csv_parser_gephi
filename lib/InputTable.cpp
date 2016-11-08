@@ -124,6 +124,12 @@ void InputTable::ReadFile(const std::string &inputFile, const char &sepOneChar)
 	stringLength++;
       }
     }
+    while (buffer[previousPos] == ' ') {
+      previousPos++;
+      stringLength--;
+    }
+    std::string tempString = buffer.substr(previousPos, stringLength);
+    currentLineProcessed.push_back(tempString);
     // And then we push this line of data in the larger data vector.
     dataVector.push_back(currentLineProcessed);
   }
