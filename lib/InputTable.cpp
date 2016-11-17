@@ -89,7 +89,7 @@ void InputTable::ReadFile(const std::string &inputFile, const char &sepOneChar)
       if (quoteFound == false && buffer[i] == '"') {
 	quoteFound = true;
       } else if (quoteFound == true && buffer[i] == '"') {
-	quoteFound = false;
+	  quoteFound = false;
       }
     }
     if (quoteFound == true) {
@@ -108,8 +108,11 @@ void InputTable::ReadFile(const std::string &inputFile, const char &sepOneChar)
     for (std::string::size_type i = 0; i != buffer.length(); i++) {
       if (inTextField == false && buffer[i] == '"') {
 	inTextField = true;
+	previousPos++;
+	stringLength--;
       } else if (inTextField == true && buffer[i] == '"') {
 	inTextField = false;
+	stringLength--;
       }
       if (inTextField == false && buffer[i] == sepOneChar) {
 	while (buffer[previousPos] == ' ') {

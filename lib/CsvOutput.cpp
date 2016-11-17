@@ -133,7 +133,9 @@ bool CsvOutputEdges(InputTable *table, const QString sourceSelection, const QStr
 	  std::vector <std::string> tempVector;
 	  tempVector.push_back(currentSepSource);
 	  tempVector.push_back(currentSepTarget);
-	  std::sort(tempVector.begin(), tempVector.end());
+	  if (sourceSelection == targetSelection) {
+	    std::sort(tempVector.begin(), tempVector.end());
+	  }
 	  std::string sourceTarget = tempVector[0] + sepOne + tempVector[1];
 	  if (relationshipLabel.size() > 0) {
 	    fileVector.push_back(sourceTarget + sepOne + "1" + sepOne + relationshipType + sepOne +  relationshipLabel + '\n');
