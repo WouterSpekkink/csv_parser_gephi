@@ -24,15 +24,23 @@
 
 */
 
+
 /*
-  ===NOTES===
-  See CsvOutput.cpp for more details on what this class and its methods do.  
+  ==NOTES==
+  Here we only find two functions that write an edges file and a nodes file (respectively)
+  to the disk, based on instructions received from the main dialog.
 
-*/
+  If the user indicated that his/her input file uses multi-value columns, 
+  than these values are separated here. 
 
-#ifndef CSVOUTPUT_H
-#define CSVOUTPUT_H
-#include "../include/DataInterface.h"
+ */
+ 
+#include "../include/CsvOutput.h"
+#include <fstream>
+#include <QFileDialog>
+#include <QPointer>
+#include <QMessageBox>
+#include <sstream>
 
+// This function writes an edges file to the disk.
 
-#endif

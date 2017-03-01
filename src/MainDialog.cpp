@@ -41,12 +41,12 @@
 MainDialog::MainDialog(QWidget *parent) : QDialog(parent) {
 
   /* 
-     InputTable is a class that imports a user-selected csv-file. The main dialog communicates
+     DataInterface is a class that imports a user-selected csv-file. The main dialog communicates
      with an instance of InputTable to let it know which filename was selected, and what delimiters are used.
      The created instance of InputTable then imports the data and processes it, so that it can be used by CsvOutput 
      and the properties dialog. The instance of InputTable then only let's the main dialog know that it has processed the data.
   */
-  inputTable = new InputTable(); 
+  dataInterface = new DataInterface(); 
   exitButton = new QPushButton(tr("Exit Program")); // The exit button
   topLabel = new QLabel(tr("<h3>File import</h3>")); // Just a title for part of the dialog
   openFile = new QPushButton(tr("Open File")); // Button to select filename
@@ -141,10 +141,9 @@ MainDialog::MainDialog(QWidget *parent) : QDialog(parent) {
   /* This signal is fired if the user clicks the import button. It calls a function of the main dialog that determines what function to
      call from the instantiated InputTable Classe. Once this is determined, one of the next two signals is fired.
      These pass the  necessary information to the instantiated InputTable class and tell it to import the file.  */
-  connect(importFile, SIGNAL(clicked()), this, SLOT(fireFileSend()));
-  connect(this, SIGNAL(sendFile(const QString &, const QString &)), inputTable, SLOT(readData(const QString &, const QString &)));
+  connect(importFile, SIGNAL(clicked()), this, SLOT(readNewData()));
   // This signal activates the interface for configuring nodes and edges, after a file is imported.
-  connect(inputTable, SIGNAL(importFinished()), this, SLOT(enableVariables()));
+  connect(dataInterface, SIGNAL(importFinished()), this, SLOT(enableVariables()));
   // The next two signals indicate changes in the selected source or target node, and call the appropriate functions to handle that.
   connect(sourceSelector, SIGNAL(currentIndexChanged(const QString &)), this, SLOT(setSourceSelection(const QString &)));
   connect(targetSelector, SIGNAL(currentIndexChanged(const QString &)), this, SLOT(setTargetSelection(const QString &)));
@@ -381,21 +380,21 @@ void MainDialog::setSepTwo(const QString &selection) {
    is fired, which will then lead to a request to the instantiated InputTable Class
    to start importing the file.
 */
-void MainDialog::fireFileSend()
+void MainDialog::readNewData()
 {
-  emit sendFile(fileName, sepOne);
+  dataInterface->readFile(fileName, sepOne);
 }
 
 // This function enables the part of the interface where the nodes and edges configuration is set.
-// It also retrieves the possible options for source and target nodes from the inputTable. 
+// It also retrieves the possible options for source and target nodes from the dateInterface. 
 void MainDialog::enableVariables() {
   sourceSelector->clear();
   targetSelector->clear();
   sourceSelector->addItem(tr("-Select Source Node-"));
   targetSelector->addItem(tr("-Select Target Node-"));
-  // inputTable creates a separate vector for the header of the input file. We can use this vector
+  // dataInterface creates a separate vector for the header of the input file. We can use this vector
   // to identify the names of the variables that are candidates for the source node, the target node, and properties.
-  std::vector<std::string> optionLabels = inputTable->GetHeader(); 
+  std::vector<std::string> optionLabels = dataInterface->GetHeader(); 
   std::vector<std::string>::iterator it;
   for(it = optionLabels.begin(); it != optionLabels.end(); it++) {
     QString currentLabel = QString::fromUtf8(it->c_str());
@@ -490,7 +489,7 @@ void MainDialog::setTargetSelection(const QString &selection) {
   will tell the main dialog what the properties are, so that this information is retained even after the properties dialog is deleted.
 */
 void MainDialog::openPropertiesDialog() {
-  std::vector<std::string> tempHeader = inputTable->GetHeader();
+  std::vector<std::string> tempHeader = dataInterface->GetHeader();
   QVector<QString> tempQHeader;
   std::vector<std::string>::iterator it;
   for (it = tempHeader.begin(); it != tempHeader.end(); it++) {
@@ -542,7 +541,7 @@ void MainDialog::saveEdgesFile() {
   std::string stdSepOne = sepOne.toStdString();
   std::string stdSepTwo = sepTwo.toStdString();
   // After preparing some necessary information, we call the CsvOutputEdges() function.
-  CsvOutputEdges(inputTable, sourceSelection, targetSelection, directedRelationships, relationsType, saveFile, stdSepOne, stdSepTwo);
+  dataInterface->writeEdgeList(sourceSelection, targetSelection, directedRelationships, relationsType, saveFile, stdSepOne, stdSepTwo);
 }
 
 // This function processes the choice of the user to exclude the source nodes (or not) in the nodes list.
@@ -575,12 +574,12 @@ void MainDialog::saveNodesFile() {
   std::string stdSepOne = sepOne.toStdString();
   std::string stdSepTwo = sepTwo.toStdString();
   // After preparing some necessary information, we call the CsvOutputNodes() function.
-  CsvOutputNodes(inputTable, sourceSelection, targetSelection, sourceProperties, targetProperties, excludeSources, excludeTargets, saveFile, stdSepOne, stdSepTwo);
+  dataInterface->writeNodeList(sourceSelection, targetSelection, sourceProperties, targetProperties, excludeSources, excludeTargets, saveFile, stdSepOne, stdSepTwo);
 }
 
 // This function make sure that the memory used by the instantiated InputTable class is freed up again. 
 void MainDialog::closing() {
-    delete inputTable;
+    delete dataInterface;
 }
 
 // This function will reset some options to prevent unexpected results if the user

@@ -25,35 +25,41 @@
 
 /*
   ===NOTES===
-  See InputTable.cpp for more details on what this class and its methods do.  
+  See DataInterface.cpp for more details on what this class and its methods do.  
 
  */
    
-#ifndef INPUTTABLE_H
-#define INPUTTABLE_H
+#ifndef DATAINTERFACE_H
+#define DATAINTERFACE_H
 
 #include <QObject>
 #include <string>
 #include <vector>
 
-class InputTable : public QObject {
+class DataInterface : public QObject {
 
   Q_OBJECT
 
 public:
-  InputTable(QWidget *parent = 0); 
-  void ReadFile(const std::string &file, const char &sepOneChar);
+  DataInterface(); 
+  void readFile(const QString &fileName, const QString &sepOne);
   const std::vector<std::string> GetHeader();
   const std::vector<std::vector <std::string> > GetRowData();
+  void writeEdgeList(
+		     const QString sourceSelection, const QString targetSelection, const bool directedRelationships,
+		     const QString relationsType, const std::string filename, const std::string sepOne, const std::string sepTwo
+		     );
+  void writeNodeList(
+		      QString sourceSelection, QString targetSelection, std::vector <std::string> sourceProperties,
+		      std::vector <std::string> targetProperties, bool excludeSources, bool excludeTargets,
+		      std::string filename, std::string sepOne, std::string sepTwo
+		      );
   
-  ~InputTable() {}
+  ~DataInterface() {}
   
 signals:
   void importFinished();
 		       
-private slots:
-  void readData(const QString &fileName, const QString &sepOne);
-  
 private:
   // We assume that the first column of the file that the user submits has the events/incidents.
   // We also assume that the file has a header.

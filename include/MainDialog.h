@@ -37,8 +37,7 @@
 #include <QApplication>
 #include <QDialog>
 #include "PropertiesDialog.h"
-#include "InputTable.h"
-#include "CsvOutput.h"
+#include "DataInterface.h"
 #include <vector>
 #include <string>
 
@@ -64,7 +63,8 @@ private slots:
   void setSepOne(const QString &selection);
   void switchSepTwo(const int &state);
   void setSepTwo(const QString &selection);
-  void fireFileSend();
+  //void fireFileSend();
+  void readNewData();
   void enableVariables();
   void openPropertiesDialog();
   void setSourceSelection(const QString &selection);
@@ -103,7 +103,7 @@ private:
   QPointer<QComboBox> sepTwoSelector;
   QPointer<QCheckBox> sepTwoSwitcher;
   QPointer<QPushButton> importFile;
-  QPointer<InputTable> inputTable;
+  QPointer<DataInterface> dataInterface;
   QPointer<QPushButton> exitButton;
   QPointer<QPushButton> saveNodes;
   QPointer<QPushButton> saveEdges;
@@ -119,7 +119,6 @@ private:
   QString relationsType;
   std::vector <std::string> sourceProperties;
   std::vector <std::string> targetProperties;
-
 };
 
 #endif

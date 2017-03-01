@@ -1,7 +1,6 @@
 /*
- Copyright 2016 Wouter Spekkink
- Authors : Wouter Spekkink <wouter.spekkink@gmail.com>
- Website : http://www.wouterspekkink.org
+ Copyright 2016 Wouter Spekkink Authors : Wouter Spekkink
+ <wouter.spekkink@gmail.com> Website : http://www.wouterspekkink.org
 
  This file is part of the Gephi CSV Parser.
 
@@ -22,39 +21,152 @@
  You should have received a copy of the GNU General Public License
  along with the Gephi CSV Parser.  If not, see <http://www.gnu.org/licenses/>.
 
-*/
-
+*/ 
 
 /*
   ==NOTES==
-  Here we only find two functions that write an edges file and a nodes file (respectively)
-  to the disk, based on instructions received from the main dialog.
+  This class imports data from a csv-file, based on instructions received from the main dialog
+  of the program. The data are imported as well as stored by the DataInterface class.
 
-  If the user indicated that his/her input file uses multi-value columns, 
-  than these values are separated here. 
+*/
 
- */
- 
-#include "../include/CsvOutput.h"
+#include <string>
+#include <vector>
 #include <fstream>
-#include <QFileDialog>
-#include <QPointer>
-#include <QMessageBox>
 #include <sstream>
+#include <QMessageBox>
+#include <QPointer>
+#include <QSpacerItem>
+#include <QGridLayout>
+#include "../include/DataInterface.h"
 
-// This function writes an edges file to the disk.
-bool CsvOutputEdges(InputTable *table, const QString sourceSelection, const QString targetSelection, const bool directedRelationships, const QString relationsType, const std::string filename, const std::string sepOne, const std::string sepTwo) {
+// Constructor for this class.
+DataInterface::DataInterface()
+{
+}
+
+void DataInterface::readFile(const QString &fileName, const QString &sepOne) 
+{
+  // Here any existing data are removed. 
+  rowData.clear();
+  header.clear();
+
+  // Translating the method arguments to something that this class can use.
+  // We sometimes need the separator as a char, and sometimes we need it as a string.
+  const std::string inputFile = fileName.toStdString();
+  std::string sepOneString = sepOne.toStdString();
+  std::istringstream convertOne(sepOneString.c_str());
+  char sepOneChar;
+  convertOne >> sepOneChar;
+  
+  // Let's first make a vector of vectors of strings. Currently, this will make a matrix of strings.
+  std::vector <std::vector <std::string> > dataVector;
+
+  // Set up an file instream for the input file.
+  std::ifstream myFile (inputFile.c_str());
+
+  // Then we read all the lines of data in the input file.
+  while(myFile) {
+    // The buffer will hold one line of raw data temporarily, and we will do some processing on it.
+    std::string buffer;
+    if (!getline(myFile, buffer)) break;
+
+    /* I had some problems reading files with embedded line breaks. 
+       It should be easy to spot these linebreaks by checking for unmatched quotes.  
+       However, I am not sure whether unmatched quotes are necessarily caused by embedded linebreaks.
+       Therefore, the program shows an error box, cancels the import process, and leaves it to the 
+       user to deal with the problem outside the program. 
+    */
+    bool quoteFound = false;
+    for (std::string::size_type i = 0; i != buffer.length(); i++) {
+      if (quoteFound == false && buffer[i] == '"') {
+	quoteFound = true;
+      } else if (quoteFound == true && buffer[i] == '"') {
+	  quoteFound = false;
+      }
+    }
+    if (quoteFound == true) {
+      QPointer<QMessageBox> errorBox = new QMessageBox;
+      errorBox->setText(tr("<b>ERROR: Import cancelled</b>"));
+      errorBox->setInformativeText("Unmatched quotes (\") were found in one of the lines of the file.");
+      errorBox->exec();
+      return;
+    }
+    // This boolean will indicate whether or not we find ourselves in a text field. These may hold
+    // delimiter symbols that should be ignored. The code below is customized to do just that.
+    bool inTextField = false;
+    std::vector <std::string> currentLineProcessed;
+    std::string::size_type stringLength = 0;
+    std::string::size_type previousPos = 0;
+    for (std::string::size_type i = 0; i != buffer.length(); i++) {
+      if (inTextField == false && buffer[i] == '"') {
+	inTextField = true;
+	previousPos++;
+	stringLength--;
+      } else if (inTextField == true && buffer[i] == '"') {
+	inTextField = false;
+	stringLength--;
+      }
+      if (inTextField == false && buffer[i] == sepOneChar) {
+	while (buffer[previousPos] == ' ') {
+	  previousPos++;
+	  stringLength--;
+	}
+	std::string tempString = buffer.substr(previousPos, stringLength);
+	currentLineProcessed.push_back(tempString);
+	previousPos = i + 1;
+	stringLength = 0;
+      } else {
+	stringLength++;
+      }
+    }
+    while (buffer[previousPos] == ' ') {
+      previousPos++;
+      stringLength--;
+    }
+    std::string tempString = buffer.substr(previousPos, stringLength);
+    currentLineProcessed.push_back(tempString);
+    // And then we push this line of data in the larger data vector.
+    dataVector.push_back(currentLineProcessed);
+  }
+
+  // This will disect the data into the header row, the event column, and the data rows. 
+  std::vector<std::vector <std::string> >::iterator it;
+  for(it = dataVector.begin(); it != dataVector.end(); it++) {
+    // The first line is always the header
+    if(it == dataVector.begin()) {
+      std::vector<std::string> tempVector = *it;
+      std::vector<std::string>::iterator it2;
+      for(it2 = tempVector.begin(); it2 != tempVector.end(); it2++)
+	header.push_back(*it2);
+    } else {
+      // Then we handle the other 'rows' in the data vector.
+      rowData.push_back(*it);
+    }
+  }
+  if (header.empty()) {
+    QPointer<QMessageBox> errorBox =  new QMessageBox;
+    errorBox->setText(tr("<b>ERROR: Import cancelled</b>"));
+    errorBox->setInformativeText("Something strange happened during the import. Did you set the delimiters correctly?");
+    errorBox->exec();
+    return;
+  }
+  // This signal is sent to the main dialog to let it know we have finished importing the file.
+  emit importFinished();
+}
+
+void DataInterface::writeEdgeList(
+		   const QString sourceSelection, const QString targetSelection, const bool directedRelationships,
+		   const QString relationsType, const std::string filename, const std::string sepOne, const std::string sepTwo
+		   ) {
   // We point to the InputTable and we get all the stuff out that we need from the input table and the function arguments.
-  InputTable *outputTable = table; 
-  std::vector <std::string> headers = outputTable->GetHeader();  
-  std::vector <std::vector <std::string> > data = outputTable->GetRowData();
-  std::string sourceString = sourceSelection.toUtf8().constData();
-  std::string targetString = targetSelection.toUtf8().constData();
+  std::string sourceString = sourceSelection.toStdString();
+  std::string targetString = targetSelection.toStdString();
   std::string relationshipType = "Undirected";
   if (directedRelationships) {
     relationshipType = "Directed";
   }
-  std::string relationshipLabel = relationsType.toUtf8().constData();
+  std::string relationshipLabel = relationsType.toStdString();
   std::istringstream convertSepOne(sepOne.c_str());
   char sepOneChar;
   convertSepOne >> sepOneChar;
@@ -66,8 +178,8 @@ bool CsvOutputEdges(InputTable *table, const QString sourceSelection, const QStr
   // We create and set an index to achieve that.
   int sourceIndex = 0;
   int targetIndex = 0;
-  for (std::vector<std::string>::size_type i = 0; i != headers.size(); i++) {
-    std::string currentString = headers[i];
+  for (std::vector<std::string>::size_type i = 0; i != header.size(); i++) {
+    std::string currentString = header[i];
     if (currentString == sourceString) {
       sourceIndex = i;
     }
@@ -79,7 +191,11 @@ bool CsvOutputEdges(InputTable *table, const QString sourceSelection, const QStr
   // Then we prepare the file for writing.
   std::ofstream fileOut(filename.c_str());
   if (!fileOut.is_open()) {
-    return false;
+    QPointer<QMessageBox> errorBox = new QMessageBox;
+    errorBox->setText(tr("<b>ERROR: Could not write file</b>"));
+    errorBox->setInformativeText("The program had problems trying to open the file in which to write data");
+    errorBox->exec();
+    return;
   }
   
   // First we write the header of the file.
@@ -95,7 +211,7 @@ bool CsvOutputEdges(InputTable *table, const QString sourceSelection, const QStr
   
   // Then we iterate through the data vector, find the appropriate entries, and write them to our file vector.
   std::vector <std::vector <std::string> >::iterator itData;
-  for (itData = data.begin(); itData != data.end(); itData++) {
+  for (itData = rowData.begin(); itData != rowData.end(); itData++) {
     std::vector <std::string> currentData = *itData;
     std::string currentSource = currentData[sourceIndex];
     std::string currentTarget = currentData[targetIndex];
@@ -164,22 +280,24 @@ bool CsvOutputEdges(InputTable *table, const QString sourceSelection, const QStr
   
   // And after that we can close the file and end the function.
   fileOut.close();
-  return true;
+  return;
 }
 
-bool CsvOutputNodes(InputTable *table, QString sourceSelection, QString targetSelection, std::vector <std::string> sourceProperties, std::vector<std::string> targetProperties, bool excludeSources, bool excludeTargets, std::string filename, std::string sepOne, std::string sepTwo) {
+void DataInterface::writeNodeList(
+		    QString sourceSelection, QString targetSelection, std::vector <std::string> sourceProperties,
+		    std::vector<std::string> targetProperties, bool excludeSources, bool excludeTargets,
+		    std::string filename, std::string sepOne, std::string sepTwo
+		    ) {
   // We point to the output table and get everything we need from the table and the function arguments.
-  InputTable *outputTable = table;
-  std::vector <std::string> headers = outputTable->GetHeader();
-  std::vector <std::vector <std::string> > data = outputTable->GetRowData();
-    std::istringstream convertSepOne(sepOne.c_str());
+
+  std::istringstream convertSepOne(sepOne.c_str());
   char sepOneChar;
   convertSepOne >> sepOneChar;
   std::istringstream convertSepTwo(sepTwo.c_str());
   char sepTwoChar;
   convertSepTwo >> sepTwoChar;
-  std::string sourceString = sourceSelection.toUtf8().constData();
-  std::string targetString = targetSelection.toUtf8().constData();
+  std::string sourceString = sourceSelection.toStdString();
+  std::string targetString = targetSelection.toStdString();
   /* 
      sharedProperties will be a new vector that holds the properties that the source and target node have in common (if any).
      These will be deleted from the original vectors for source and target properties. This is done to make sure that they
@@ -207,9 +325,9 @@ bool CsvOutputNodes(InputTable *table, QString sourceSelection, QString targetSe
   std::vector <int> sourcePropertiesIndexes;
   std::vector <int> targetPropertiesIndexes;
   std::vector <int> sharedPropertiesIndexes;
-  for (std::vector<std::string>::size_type i = 0; i != headers.size(); i++) {
+  for (std::vector<std::string>::size_type i = 0; i != header.size(); i++) {
     // First we set the indexes for our source and target nodes.
-    std::string currentString = headers[i];
+    std::string currentString = header[i];
     if (currentString == sourceString) {
       sourceIndex = i;
     }
@@ -272,7 +390,11 @@ bool CsvOutputNodes(InputTable *table, QString sourceSelection, QString targetSe
   // Then we prepare the file for writing.
   std::ofstream fileOut(filename.c_str());
   if (!fileOut.is_open()) {
-    return false;
+    QPointer<QMessageBox> errorBox = new QMessageBox;
+    errorBox->setText(tr("<b>ERROR: Could not write file</b>"));
+    errorBox->setInformativeText("The program had problems trying to open the file in which to write data");
+    errorBox->exec();
+    return;
   }
   
   // First we write the header of the file. We add conditionals to handle the possibility that source or target nodes are excluded.
@@ -294,7 +416,7 @@ bool CsvOutputNodes(InputTable *table, QString sourceSelection, QString targetSe
   // separated entries.
   std::vector <std::string> sepSources;
   std::vector <std::string> sepTargets;
-  for (itData = data.begin(); itData != data.end(); itData++) {
+  for (itData = rowData.begin(); itData != rowData.end(); itData++) {
     std::vector <std::string> currentData = *itData;
     std::string currentSource = currentData[sourceIndex];
     std::string currentTarget = currentData[targetIndex];
@@ -419,5 +541,20 @@ bool CsvOutputNodes(InputTable *table, QString sourceSelection, QString targetSe
   
   // And when we are finished, we can close the file.
   fileOut.close();
-  return true;
+  return;
 }
+
+// Returns a vector with the headers.
+const std::vector<std::string> DataInterface::GetHeader() {
+  return header;
+}
+
+// Returns a vector with the data.
+const std::vector<std::vector <std::string> > DataInterface::GetRowData() {
+  return rowData;
+}
+
+
+
+
+

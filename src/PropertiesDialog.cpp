@@ -41,7 +41,7 @@
 PropertiesDialog::PropertiesDialog(QWidget *parent) : QDialog(parent) {}
 
 // This is the main constructor.
-PropertiesDialog::PropertiesDialog(QWidget *parent, const QVector<QString> Qheader, const QString sourceInput, const QString targetInput) {
+PropertiesDialog::PropertiesDialog(QWidget *parent, const QVector<QString> Qheader, const QString sourceInput, const QString targetInput) : QDialog(parent) {
   // We first set up the standard elements of the interface, which are only two labels and two buttons.
   sourceLabel = new QLabel(sourceInput);
   targetLabel = new QLabel(targetInput);
@@ -81,13 +81,13 @@ PropertiesDialog::PropertiesDialog(QWidget *parent, const QVector<QString> Qhead
   QPointer<QVBoxLayout> mainBodyRight = new QVBoxLayout;
 
   mainBodyLeft->addWidget(sourceLabel);
-  QVectorIterator<QPointer<QCheckBox>> sI(sourceVector);
+  QVectorIterator<QPointer<QCheckBox> > sI(sourceVector);
   while (sI.hasNext()) {
     mainBodyLeft->addWidget(sI.next());
   }
   
   mainBodyRight->addWidget(targetLabel);
-  QVectorIterator<QPointer<QCheckBox>> tI(targetVector);
+  QVectorIterator<QPointer<QCheckBox> > tI(targetVector);
   while (tI.hasNext()) {
     mainBodyRight->addWidget(tI.next());
   }
@@ -123,7 +123,7 @@ void PropertiesDialog::cancel() {
   We then clear the vectors of pointers and exit.
 */
 void PropertiesDialog::saveAndClose() {
-  QVectorIterator<QPointer<QCheckBox>> spI(sourceVector);
+  QVectorIterator<QPointer<QCheckBox> > spI(sourceVector);
   spI.toFront();
   while (spI.hasNext()) {
     QPointer<QCheckBox> tempBox = spI.next();
@@ -131,7 +131,7 @@ void PropertiesDialog::saveAndClose() {
       sourceProperties.push_back(tempBox->text());
     }
   }
-  QVectorIterator<QPointer<QCheckBox>> tpI(targetVector);
+  QVectorIterator<QPointer<QCheckBox> > tpI(targetVector);
   tpI.toFront();
   while (tpI.hasNext()) {
     QPointer<QCheckBox> tempBox = tpI.next();

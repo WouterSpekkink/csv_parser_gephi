@@ -34,7 +34,7 @@
 #define PROPERTIESDIALOG_H
 
 #include <QtGui>
-#include "../include/InputTable.h"
+//nclude "../include/DataInterface.h"
 
 class PropertiesDialog : public QDialog {
   
@@ -61,8 +61,8 @@ private slots:
 private:
   QPointer<QLabel> sourceLabel;
   QPointer<QLabel> targetLabel;
-  QVector<QPointer<QCheckBox>> sourceVector;
-  QVector<QPointer<QCheckBox>> targetVector;    
+  QVector<QPointer<QCheckBox> > sourceVector;
+  QVector<QPointer<QCheckBox> > targetVector;    
   QPointer<QPushButton> saveCloseButton;
   QPointer<QPushButton> cancelButton;
   
