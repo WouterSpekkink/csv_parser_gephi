@@ -1,4 +1,3 @@
-
 /*
   Copyright 2016 Wouter Spekkink Authors : Wouter Spekkink
   <wouter.spekkink@gmail.com> Website : http://www.wouterspekkink.org
@@ -537,11 +536,16 @@ void MainDialog::setRelationshipLabel(const QString &label) {
 void MainDialog::saveEdgesFile() {
   // We first the user ask for the desired filename for the new edges file.
   QString QsaveFile = QFileDialog::getSaveFileName(this, tr("Save File"),"", tr("Comma Delimited Files (*.csv *.txt)"));
-  std::string saveFile = QsaveFile.toStdString();
-  std::string stdSepOne = sepOne.toStdString();
-  std::string stdSepTwo = sepTwo.toStdString();
-  // After preparing some necessary information, we call the CsvOutputEdges() function.
-  dataInterface->writeEdgeList(sourceSelection, targetSelection, directedRelationships, relationsType, saveFile, stdSepOne, stdSepTwo);
+  if (!QsaveFile.trimmed().isEmpty()) {
+    if (!QsaveFile.endsWith(".csv")) {
+      QsaveFile.append(".csv");
+    }
+    std::string saveFile = QsaveFile.toStdString();
+    std::string stdSepOne = sepOne.toStdString();
+    std::string stdSepTwo = sepTwo.toStdString();
+    // After preparing some necessary information, we call the CsvOutputEdges() function.
+    dataInterface->writeEdgeList(sourceSelection, targetSelection, directedRelationships, relationsType, saveFile, stdSepOne, stdSepTwo);
+  }
 }
 
 // This function processes the choice of the user to exclude the source nodes (or not) in the nodes list.
@@ -570,11 +574,16 @@ void MainDialog::setExcludeTargets(const int &state) {
 void MainDialog::saveNodesFile() {
   // We first the user ask for the desired filename for the new nodes file.
   QString QsaveFile = QFileDialog::getSaveFileName(this, tr("Save File"),"", tr("Comma Delimited Files (*.csv *.txt)"));
-  std::string saveFile = QsaveFile.toStdString();
-  std::string stdSepOne = sepOne.toStdString();
-  std::string stdSepTwo = sepTwo.toStdString();
-  // After preparing some necessary information, we call the CsvOutputNodes() function.
-  dataInterface->writeNodeList(sourceSelection, targetSelection, sourceProperties, targetProperties, excludeSources, excludeTargets, saveFile, stdSepOne, stdSepTwo);
+  if (!QsaveFile.trimmed().isEmpty()) {
+    if (!QsaveFile.endsWith(".csv")) {
+      QsaveFile.append(".csv");
+    }
+    std::string saveFile = QsaveFile.toStdString();
+    std::string stdSepOne = sepOne.toStdString();
+    std::string stdSepTwo = sepTwo.toStdString();
+    // After preparing some necessary information, we call the CsvOutputNodes() function.
+    dataInterface->writeNodeList(sourceSelection, targetSelection, sourceProperties, targetProperties, excludeSources, excludeTargets, saveFile, stdSepOne, stdSepTwo);
+  }
 }
 
 // This function make sure that the memory used by the instantiated InputTable class is freed up again. 
